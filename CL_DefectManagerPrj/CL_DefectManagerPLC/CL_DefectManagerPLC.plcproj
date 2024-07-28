@@ -19,7 +19,7 @@
     <Company>CleanGreensSA</Company>
     <Released>true</Released>
     <Title>DefectManager_class</Title>
-    <ProjectVersion>1.05</ProjectVersion>
+    <ProjectVersion>1.06</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -81,6 +81,18 @@
     <Folder Include="POUs" />
   </ItemGroup>
   <ItemGroup>
+    <PlaceholderReference Include="CL_errorDB">
+      <DefaultResolution>ErrorDatabase_class, * (CleanGreensSA)</DefaultResolution>
+      <Namespace>ErrorDatabase_class</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Database">
+      <DefaultResolution>Tc2_Database, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Database</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_DataExchange">
+      <DefaultResolution>Tc2_DataExchange, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_DataExchange</Namespace>
+    </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_Standard</Namespace>
@@ -88,6 +100,14 @@
     <PlaceholderReference Include="Tc2_System">
       <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Utilities">
+      <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Utilities</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Database">
+      <DefaultResolution>Tc3_Database, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Database</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc3_Module">
       <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
