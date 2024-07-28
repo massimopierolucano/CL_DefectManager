@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="E_DefectState" Id="{aa4ff739-14ce-4ba0-abfb-ecad6d055648}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+//{attribute 'strict'}   without strict type casting between integer et enum types is possible
+TYPE E_DefectState :
+(
+	None := 0,
+	Off,
+	Active,
+	ActiveAndAck,
+	OffAndNotAck
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

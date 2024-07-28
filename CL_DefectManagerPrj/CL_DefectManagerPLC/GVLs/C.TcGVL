@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="C" Id="{b637d4a5-b39c-4bf9-8f55-3f1254518ed6}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL CONSTANT
+  //Defect manager constants
+	nMaxDefaults_C    							      : INT := 700; 
+	nMaxDefaultsView_C   							    : INT := 20;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

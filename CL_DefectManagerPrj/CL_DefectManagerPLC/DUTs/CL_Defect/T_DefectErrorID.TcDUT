@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="T_DefectErrorID" Id="{25d2ecbb-beff-4a96-8332-2c603fbfc68b}">
+    <Declaration><![CDATA[TYPE T_DefectErrorID : STRING(4); END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

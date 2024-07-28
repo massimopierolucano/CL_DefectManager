@@ -1,0 +1,360 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CL_DefectManager" Id="{8a374f4e-a356-442b-8efe-30c02ba84041}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC CL_DefectManager
+VAR
+	ntGetTime								: NT_GetTime;
+	bInit			              : BOOL := false;
+	i,y,x                   : INT;
+	pDefault                : POINTER TO CL_Defect;
+	iDefault                : ITF_Defect;
+	EmptyListCase           : ST_DefectTable;
+	lTemp                   : BOOL;
+	iArrayShow              : INT := 1;
+	iShow                   : INT := 1;
+  _WarningIsPresent       : BOOL;
+  _ErrorIsPresent         : BOOL;
+  _CriticalIsPresent      : BOOL;
+  
+  // Color for HMI
+	SeverityColor_Debug     : DWORD := 4294918837;
+	SeverityColor_Info      : DWORD := 4278190335;
+	SeverityColor_Warning   : DWORD := 4294945792;
+	SeverityColor_Error     : DWORD := 4294901760;
+	SeverityColor_Critical  : DWORD := 4288217088;
+  
+  // Filter minimum level shown
+	eMinSeverityShow        : TcEventSeverity  := TcEventSeverity.Info; 
+	
+	ActTime 								: TIMESTRUCT;
+	CurrentAlarmList        : ARRAY[0..C.nMaxDefaultsView_C] OF ST_DefectTable; //C.nMaxDefaultsView_C // For HMI, arList of Defaults shown
+	CurrentAllAlarmList     : ARRAY[0..C.nMaxDefaultsView_C] OF ST_DefectTable; //C.nMaxDefaultsView_C // arList of Defaults activated
+	Ack_Defaults            : BOOL := FALSE;
+	//used by CL_defect
+	arList                  : ARRAY[0..C.nMaxDefaults_C] OF POINTER TO CL_Defect; // C.nNbrMaxDefaults_C // arList of all Defaults registred // New version (struct input
+  
+  // Check by severity level
+	DefaultAlarmIsPresent    : BOOL := FALSE;
+	DefaultWarningIsPresent  : BOOL := FALSE;
+
+	sActTime 								: T_MaxString;
+	bArrayIsFull            : BOOL := FALSE;
+	
+	//used only in VISU
+	ExpertView              : BOOL := FALSE;
+	
+	// Database object
+	_objErrorDB	            :	POINTER TO CL_ErrorDB;
+	
+	// Constant values stored there (library ready)
+	_nMaxDefaultsView       :	INT;
+	_nMaxDefaults           :	INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ IF NOT bInit THEN
+  RETURN;
+END_IF
+
+GetTime();
+iShow := 0;
+FOR i:= 0 TO _nMaxDefaults DO // C.nNbrMaxDefaults_C DO
+  IF arList[i] <> 0 THEN // Check if one Defect is registred at this index
+    iDefault := arList[i]^;
+    IF __QUERYPOINTER(iDefault, pDefault) THEN // Ctrl if address has the good interface (ITF_Default)
+      IF Ack_Defaults THEN // Check if ack is asked from VISU
+        pDefault^.Ack();
+			END_IF
+      
+      // Removing of the arList Defect with state off or none
+      IF pDefault^.State = E_DefectState.Off OR pDefault^.State = E_DefectState.None THEN
+        FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
+          IF CurrentAllAlarmList[y].InstancePath = pDefault^.InstancePath THEN
+              CurrentAllAlarmList[y] := EmptyListCase;
+              
+              // Move UP all alarms in the arList
+              FOR x:= y TO _nMaxDefaultsView-1 DO //C.nMaxDefaultsView_C
+                CurrentAllAlarmList[x] := CurrentAllAlarmList[x+1];
+							END_FOR
+					END_IF
+				END_FOR
+        
+      // Add in the arList Defect present
+      ELSIF pDefault^.State = E_DefectState.Active OR pDefault^.State = E_DefectState.ActiveAndAck OR pDefault^.State = E_DefectState.OffAndNotAck THEN
+        lTemp := FALSE;
+        FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
+          IF CurrentAllAlarmList[y].InstancePath = pDefault^.InstancePath THEN
+            CurrentAllAlarmList[y].State := pDefault^.State;
+            lTemp                     := TRUE;
+            iShow                     := iShow + 1;
+            EXIT;
+					END_IF
+				END_FOR
+        IF NOT lTemp THEN
+          FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
+            IF CurrentAllAlarmList[y].InstancePath = '' THEN
+              CurrentAllAlarmList[y].InstancePath     := pDefault^.InstancePath;
+              CurrentAllAlarmList[y].State            := pDefault^.State;
+              CurrentAllAlarmList[y].Severity         := pDefault^.Severity;
+              CurrentAllAlarmList[y].ErrorID          := pDefault^.ErrorID;
+              CurrentAllAlarmList[y].ClassID          := pDefault^.ClassID;
+              CurrentAllAlarmList[y].Description      := pDefault^.Description;
+              CASE pDefault^.Severity OF
+                TcEventSeverity.Verbose   : CurrentAllAlarmList[y].Color := SeverityColor_Debug;
+                TcEventSeverity.Info      : CurrentAllAlarmList[y].Color := SeverityColor_Info;
+                TcEventSeverity.Warning   : CurrentAllAlarmList[y].Color := SeverityColor_Warning;
+                TcEventSeverity.Error     : CurrentAllAlarmList[y].Color := SeverityColor_Error;
+                TcEventSeverity.Critical  : CurrentAllAlarmList[y].Color := SeverityColor_Critical;
+							END_CASE
+              iShow := iShow + 1;
+              EXIT;
+            END_IF
+          END_FOR
+        END_IF
+			END_IF
+    END_IF
+	END_IF
+END_FOR
+
+FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
+  CurrentAlarmList[y] := EmptyListCase;
+END_FOR
+FOR i:= 0 TO _nMaxDefaultsView DO//C.nMaxDefaultsView_C DO // Why a double for loop here? Maybe a better way.
+  IF  CurrentAllAlarmList[i].Severity >= eMinSeverityShow THEN
+    FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
+      IF CurrentAlarmList[y].InstancePath = '' THEN
+        CurrentAlarmList[y] := CurrentAllAlarmList[i];
+        EXIT;
+			END_IF
+		END_FOR
+	END_IF
+END_FOR
+
+_CriticalIsPresent := FALSE;
+_ErrorIsPresent := FALSE;
+_WarningIsPresent := FALSE;
+
+FOR i := 0 TO  _nMaxDefaults DO // C.nNbrMaxDefaults_C 
+	IF arList[i] <> 0 THEN // Check if one Defect is registred at this index
+    iDefault := arList[i]^;
+    IF __QUERYPOINTER(iDefault, pDefault) THEN
+			IF pDefault^.State = E_DefectState.Active OR pDefault^.State = E_DefectState.ActiveAndAck THEN //remove arList[i]^.State = E_DefectState.OffAndNotAck
+				IF pDefault^.Severity = TcEventSeverity.Critical THEN
+					_CriticalIsPresent := TRUE;
+				END_IF
+				IF pDefault^.Severity = TcEventSeverity.Error THEN
+					_ErrorIsPresent  := TRUE;
+				END_IF
+				IF pDefault^.Severity = TcEventSeverity.Warning THEN
+					_WarningIsPresent := TRUE;
+				END_IF        
+			END_IF
+		END_IF//__QUERYPOINTER
+	END_IF//arList[i] <> 0
+END_FOR
+	
+iArrayShow := iShow - 1;]]></ST>
+    </Implementation>
+    <Property Name="ArrayIsFull" Id="{60be3136-2b7a-4dcb-8372-feb0d96ee9d2}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ArrayIsFull : BOOL]]></Declaration>
+      <Get Name="Get" Id="{9c782017-7664-475d-870d-9c1b2e659665}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ArrayIsFull := bArrayIsFull;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c4bbc071-6ea4-48d3-ad6e-b582c000992e}">
+        <Declaration><![CDATA[PUBLIC 
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[bArrayIsFull := ArrayIsFull;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="CriticalIsPresent" Id="{1007f4d2-bf28-4616-ba26-13a92f3f8e2e}">
+      <Declaration><![CDATA[PROPERTY CriticalIsPresent : bool]]></Declaration>
+      <Get Name="Get" Id="{e5d98594-a2e1-4b9f-b748-e41894cbaea5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CriticalIsPresent := _CriticalIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="ErrorIsPresent" Id="{b1963fe5-df9f-42d4-b939-1f2b892c24a1}">
+      <Declaration><![CDATA[PROPERTY ErrorIsPresent : bool]]></Declaration>
+      <Get Name="Get" Id="{c10aa3d6-f726-493e-a457-44c834496c87}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ErrorIsPresent := _ErrorIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="GetTime" Id="{c140a0f4-e464-4e96-8edc-a0513f513f2e}">
+      <Declaration><![CDATA[METHOD GetTime]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ntGetTime(NETID:= , START:= NOT bInit, TMOUT:= , BUSY=> , ERR=> , ERRID=> , TIMESTR=> ActTime);
+sActTime := CONCAT(TO_STRING(ActTime.wYear), '/');
+sActTime := CONCAT(sActTime, TO_STRING(ActTime.wMonth));
+sActTime := CONCAT(sActTime, '/');
+sActTime := CONCAT(sActTime, TO_STRING(ActTime.wDay));
+sActTime := CONCAT(sActTime, '-');
+sActTime := CONCAT(sActTime, TO_STRING(ActTime.wHour));
+sActTime := CONCAT(sActTime, ':');
+sActTime := CONCAT(sActTime, TO_STRING(ActTime.wMinute));
+sActTime := CONCAT(sActTime, ':');
+sActTime := CONCAT(sActTime, TO_STRING(ActTime.wSecond));]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Init" Id="{db1f869e-ec34-41a5-b14c-7767f959b8da}">
+      <Declaration><![CDATA[METHOD PUBLIC Init : BOOL
+VAR_INPUT
+	nMaxDefaults	    : INT;
+	nMaxDefaultsView	:	INT;
+  objErrorDB        : POINTER TO CL_ErrorDB;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Init := FALSE;
+_objErrorDB := objErrorDB;
+_nMaxDefaults	:=	nMaxDefaults;
+_nMaxDefaultsView	:=	nMaxDefaultsView;
+IF NOT bInit AND _objErrorDB <> 0 AND _nMaxDefaults > 0 AND  _nMaxDefaultsView > 0 THEN
+//  At init, set all Defects pointer to 0
+	FOR i:= 0 TO _nMaxDefaults DO
+    arList[i] := 0;
+  END_FOR
+  //DoRegistration := TRUE;
+ 	bInit := Init := TRUE;
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsASevereDefectSet" Id="{89ad5e55-4230-4edc-81ed-424a309879c0}">
+      <Declaration><![CDATA[METHOD PUBLIC IsASevereDefectSet : BOOL
+VAR
+	i			: INT;	
+	pDef	: POINTER TO CL_Defect;
+	iDef	: ITF_Defect;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// this funtion return true if AT LEAST one defect critical or warning or error is set
+IsASevereDefectSet := false;
+//FOR i:= 0 TO C.nNbrMaxDefaults_C DO
+FOR i:= 0 TO _nMaxDefaults DO
+	IF arList[i] <> 0 THEN // Check if one defect is registred at this index
+		iDef := arList[i]^;
+		// Ctrl if address has the good interface (ITF_Default)
+		IF __QUERYPOINTER(iDef, pDef) THEN 
+			IF pDef^.State = E_DefectState.Active OR pDef^.State = E_DefectState.OffAndNotAck OR pDef^.State = E_DefectState.ActiveAndAck THEN
+				IF pDef^.Severity = TcEventSeverity.Critical OR pDef^.Severity = TcEventSeverity.Error OR pDef^.Severity = TcEventSeverity.Warning THEN
+					IsASevereDefectSet := TRUE;
+					EXIT;
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="List" Id="{348bdb8b-aa35-4d6b-8e41-0d869fbd9981}">
+      <Declaration><![CDATA[METHOD PUBLIC List : POINTER TO CL_Defect
+VAR_INPUT
+	ind : INT;
+	defect : POINTER TO CL_Defect;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//IF (ind <= C.nNbrMaxDefaults_C) THEN 
+IF (ind <= _nMaxDefaults) THEN 
+	IF defect <> 0 THEN 
+		arList[ind] := defect;
+		List := defect;
+	ELSE
+		List := arList[ind];
+		defect := arList[ind];
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="nMaxDefaults" Id="{4de43547-ee12-4fb3-8150-0b9bcf26a0e2}">
+      <Declaration><![CDATA[PROPERTY PUBLIC nMaxDefaults : INT]]></Declaration>
+      <Get Name="Get" Id="{f9ae0220-266e-4e76-8f38-53620c4c24f8}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nMaxDefaults	:=	_nMaxDefaults;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="nMaxDefaultsView" Id="{6ec90784-6d3c-486b-b0f5-8d2943948cfc}">
+      <Declaration><![CDATA[PROPERTY PUBLIC nMaxDefaultsView : INT]]></Declaration>
+      <Get Name="Get" Id="{6042569f-32d1-4fcb-9c22-5cfd1a36d314}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[nMaxDefaultsView	:= _nMaxDefaultsView;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="objErrorDB" Id="{52ff720b-9d37-4c18-a68a-d67caa1273a5}">
+      <Declaration><![CDATA[PROPERTY PUBLIC objErrorDB : POINTER TO CL_ErrorDB]]></Declaration>
+      <Get Name="Get" Id="{fca39d6d-b539-4140-ac1f-8844f4724ea0}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[//objErrorDB := ADR(_objErrorDB);
+objErrorDB := _objErrorDB;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="SearchDefectDB" Id="{ccebf506-2bc5-40a7-a227-9e46168d4900}">
+      <Declaration><![CDATA[METHOD PUBLIC SearchDefectDB
+VAR_INPUT
+  errorID	:	STRING(3);
+	classID	:	STRING(3);
+END_VAR
+VAR_OUTPUT
+//	errorValues:	ST_SP_RecordReturn;
+//	classValues:	ST_SP_ClassReturn;
+	udiDBErrorIndex	:	UDINT;
+	udiDBClassIndex	:	UDINT;
+  error:  BOOL;
+END_VAR
+VAR
+	bExecEnd:		BOOL;
+	uiSafeIter:	USINT := 0;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_objErrorDB^.SearchErrorData(errorID := errorID, udiErrorIndex => udiDBErrorIndex, error => error);
+_objErrorDB^.SearchClassData(classID := classID, udiClassIndex => udiDBClassIndex, error => error);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="WarningIsPresent" Id="{48e285b1-c19f-4318-bacc-6849b28f4f73}">
+      <Declaration><![CDATA[PROPERTY WarningIsPresent : bool]]></Declaration>
+      <Get Name="Get" Id="{f02eac71-fdec-4b68-b7ca-43eda3ae7209}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[WarningIsPresent := _WarningIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

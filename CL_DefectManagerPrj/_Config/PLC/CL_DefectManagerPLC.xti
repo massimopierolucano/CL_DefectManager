@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<TcSmItem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.47" ClassName="CNestedPlcProjDef">
+	<Project GUID="{C0C61265-6D64-4D1B-81F1-6E1DD189A6A0}" Name="CL_DefectManagerPLC" PrjFilePath="..\..\CL_DefectManagerPLC\CL_DefectManagerPLC.plcproj" TmcFilePath="..\..\CL_DefectManagerPLC\CL_DefectManagerPLC.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e"/>
+</TcSmItem>
