@@ -16,6 +16,30 @@
     <Implicit_KindOfTask>{c38744b6-b614-4b27-8212-833c31a9329b}</Implicit_KindOfTask>
     <Implicit_Jitter_Distribution>{51a4d365-e3f9-4c9e-9284-8142424d1a1d}</Implicit_Jitter_Distribution>
     <LibraryReferences>{549e7324-26e3-44b6-b6f1-d3e724f0ec9c}</LibraryReferences>
+    <Company>CleanGreensSA</Company>
+    <Released>true</Released>
+    <Title>DefectManager_class</Title>
+    <ProjectVersion>1.05</ProjectVersion>
+    <LibraryCategories>
+      <LibraryCategory xmlns="">
+        <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
+        <Version>1.0.0.0</Version>
+        <DefaultName>CleanGreens SA</DefaultName>
+      </LibraryCategory>
+      <LibraryCategory xmlns="">
+        <Id>{1047b9bd-1e5b-48b4-9076-e38e285516e5}</Id>
+        <Version>1.0.0.0</Version>
+        <ParentCategory>
+          <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
+        </ParentCategory>
+        <DefaultName>Automation</DefaultName>
+      </LibraryCategory>
+    </LibraryCategories>
+    <SelectedLibraryCategories>
+      <Id xmlns="">{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
+    </SelectedLibraryCategories>
+    <Placeholder>CL_DefectManager</Placeholder>
+    <Description>class to handle defects</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DUTs\CL_Defect\E_DefectState.TcDUT">
