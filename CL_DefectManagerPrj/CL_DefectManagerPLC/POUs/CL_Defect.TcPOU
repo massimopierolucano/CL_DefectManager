@@ -298,7 +298,7 @@ END_VAR]]></Declaration>
         <ST><![CDATA[Register := _bRegistered := FALSE;
 IF __ISVALIDREF(DefectMngr) THEN 
 	_DefectMngr REF= DefectMngr;
-
+  _nMyLine := _DefectMngr.ThisLine;
   //this part of code was not inside IF __ISVALIDREF(DefectManager)...we have to check before all that the reference to the DefectManager is good
   // Only way to have access to elements of an object stored into another one: method to extract the whole object!
   // TwinCAT or ST limitations!

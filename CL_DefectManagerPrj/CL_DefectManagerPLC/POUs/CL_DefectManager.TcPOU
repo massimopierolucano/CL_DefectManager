@@ -3,8 +3,8 @@
   <POU Name="CL_DefectManager" Id="{8a374f4e-a356-442b-8efe-30c02ba84041}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC CL_DefectManager
 VAR
-	ntGetTime								: NT_GetTime;
-	bInit			              : BOOL := false;
+  _nThisLine              : UINT := 0;
+	bInit			              : BOOL := FALSE;
 	i,y,x                   : INT;
 	pDefault                : POINTER TO CL_Defect;
 	iDefault                : ITF_Defect;
@@ -43,6 +43,7 @@ VAR
 	//used only in VISU
 	ExpertView              : BOOL := FALSE;
 	
+  ntGetTime								: NT_GetTime;
 	// Database object
 	_objErrorDB	            :	POINTER TO CL_ErrorDB;
 	
@@ -120,6 +121,8 @@ FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
   CurrentAlarmList[y] := EmptyListCase;
 END_FOR
 FOR i:= 0 TO _nMaxDefaultsView DO//C.nMaxDefaultsView_C DO // Why a double for loop here? Maybe a better way.
+  //TcEventSeverity : (Verbose:=0, Info:=1, Warning:=2, Error:=3, Critical:=4);
+  //eMinSeverityShow = Info = 1 thu verbose is not transfered in CurrentAlarmList
   IF  CurrentAllAlarmList[i].Severity >= eMinSeverityShow THEN
     FOR y:= 0 TO _nMaxDefaultsView DO //C.nMaxDefaultsView_C DO
       IF CurrentAlarmList[y].InstancePath = '' THEN
@@ -238,6 +241,19 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="Init2" Id="{2da82255-6fbc-4b64-82fc-3d42f64882bd}">
+      <Declaration><![CDATA[METHOD PUBLIC Init2 : BOOL
+VAR_INPUT
+	nLine             : UINT;
+  nMaxDefaults	    : INT;
+	nMaxDefaultsView	:	INT;
+  objErrorDB        : POINTER TO CL_ErrorDB;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Init2 := Init(nMaxDefaults, nMaxDefaultsView, objErrorDB);]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="IsASevereDefectSet" Id="{89ad5e55-4230-4edc-81ed-424a309879c0}">
       <Declaration><![CDATA[METHOD PUBLIC IsASevereDefectSet : BOOL
 VAR
@@ -344,6 +360,18 @@ _objErrorDB^.SearchClassData(classID := classID, udiClassIndex => udiDBClassInde
 ]]></ST>
       </Implementation>
     </Method>
+    <Property Name="ThisLine" Id="{64be9357-55ab-4ab0-908b-8a4ba9a0bcba}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ThisLine : UINT]]></Declaration>
+      <Get Name="Get" Id="{6a65325e-a437-45a2-a019-3449705793ec}">
+        <Declaration><![CDATA[PUBLIC 
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ThisLine := _nThisLine;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="WarningIsPresent" Id="{48e285b1-c19f-4318-bacc-6849b28f4f73}">
       <Declaration><![CDATA[PROPERTY WarningIsPresent : bool]]></Declaration>
       <Get Name="Get" Id="{f02eac71-fdec-4b68-b7ca-43eda3ae7209}">
