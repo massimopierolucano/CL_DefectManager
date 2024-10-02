@@ -4,6 +4,8 @@
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK CL_Defect IMPLEMENTS ITF_Defect
 VAR
+  _nMyLine            : UINT; 
+  //_nLine is either the GHSpan or the Irrigation line.  The irrigation line is some installation coincides with the GHSpan, in other installation is one of the 2 lines of the GHSpan
 	_State              : E_DefectState := E_DefectState.None; 
 	
 	_ErrorIndex					:	UDINT;
@@ -27,7 +29,6 @@ VAR
 	{attribute 'no_init'}
 	_InstancePath       : T_InstancePath;
 	InstanceStr_P		    : POINTER TO STRING(1000);
-	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -101,8 +102,8 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[InstanceStr_P := ADR(_InstancePath);
-//BUG in FB_IotHttpRequest: cannot build the URL with the name of Project in it; why!! otherwise the URl 
-//sent to Telegram Web API reurn server error.  Remove from the instance string the name of the project!
+//BUG in FB_IotHttpRequest: cannot build the URL with the name of Project in it; why!! otherwise the URL 
+//sent to Telegram Web API return server error.  Remove from the instance string the name of the project!
 //find the first occurence of '.'
 pos := FIND2(InstanceStr_P,ADR('.'));
 DELETE2(InstanceStr_P,InstanceStr_P,SIZEOF(InstanceStr_P^),pos,1);//delete project name
@@ -239,11 +240,6 @@ IF sMsgOut<>0 THEN
 			nErrId	=> , 
 			sOut	=> sMsgOut^);				
 	END_IF
-		//only for debug
-		//schar_ar := sMsgOut;		
-		//EMPTYSTR2(sMsgOut);
-//    FC_TelegramAddEscape(myString := _ErrorLongMsg, myOutputString => sTelegramErrorMsg);
-//		FC_TelegramAddEscape(myString := _RemedMsg, myOutputString => sTelegramRemedMsg);
 		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetErrorLongMsg(_ErrorIndex), sTelegramMsg => sTelegramErrorMsg);
 		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetErrorRemedMsg(_ErrorIndex), sTelegramMsg => sTelegramRemedMsg);
 		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetClassMsg(_ClassIndex), sTelegramMsg => sTelegramClassMsg);
@@ -285,7 +281,7 @@ END_VAR
     <Method Name="Register" Id="{87d2b7aa-138a-4efb-acc4-ac6598703d83}">
       <Declaration><![CDATA[METHOD PUBLIC Register : BOOL
 VAR_INPUT
-	DefectManager : REFERENCE TO CL_DefectManager;
+	DefectMngr    : REFERENCE TO CL_DefectManager;
   inClassID	    :	STRING(3);
   inErrorID     :	STRING(3);
 END_VAR
@@ -294,56 +290,60 @@ VAR
 	ArrayIsFull: INT;
 	b : BOOL;
 	indDefectLine       : UDINT;
-	DefectErrorStruct   : ST_SP_RecordReturn; // Only way to have access to a particular line in the DB.
-	DefectClassStruct	  :	ST_SP_ClassReturn;
+	//DefectErrorStruct   : ST_SP_RecordReturn; // Only way to have access to a particular line in the DB.
+	//DefectClassStruct	  :	ST_SP_ClassReturn;
 	DefectNumericStruct	:	ST_classAndErrorNum;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[Register := _bRegistered := FALSE;
+IF __ISVALIDREF(DefectMngr) THEN 
+	_DefectMngr REF= DefectMngr;
 
-// Only way to have access to elements of an object stored into another one: method to extract the whole object!
-// TwinCAT or ST limitations!
-DefectManager.SearchDefectDB(errorID := inErrorID, classID := inClassID, udiDBErrorIndex => _ErrorIndex, udiDBClassIndex => _ClassIndex);
-
-DefectNumericStruct := DefectManager.objErrorDB^.GetNumerics(udiErrorIndex := _ErrorIndex, udiClassIndex := _ClassIndex);
-
-// Store data in right location
-//  CASE DefectManager._objErrorDB.WhichSeverity(_ErrorIndex) OF
-//	CASE DefectManager.objErrorDB^.WhichSeverity(_ErrorIndex) OF
-	CASE DefectManager.objErrorDB^.WhichSeverity(_ErrorIndex) OF
+  //this part of code was not inside IF __ISVALIDREF(DefectManager)...we have to check before all that the reference to the DefectManager is good
+  // Only way to have access to elements of an object stored into another one: method to extract the whole object!
+  // TwinCAT or ST limitations!
+  _DefectMngr.SearchDefectDB(errorID := inErrorID, classID := inClassID, udiDBErrorIndex => _ErrorIndex, udiDBClassIndex => _ClassIndex);
+  DefectNumericStruct := _DefectMngr.objErrorDB^.GetNumerics(udiErrorIndex := _ErrorIndex, udiClassIndex := _ClassIndex);
+  
+  CASE _DefectMngr.objErrorDB^.WhichSeverity(_ErrorIndex) OF
       0:  _Severity := TcEventSeverity.Verbose;
       1:  _Severity := TcEventSeverity.Info;
       2:  _Severity := TcEventSeverity.Warning;
       3:  _Severity := TcEventSeverity.Error;
       4:  _Severity := TcEventSeverity.Critical;
   END_CASE
-//_Severity := Severity;
-_ErrorID  := DefectNumericStruct.errorId; // Now, three digits IDs!
-_ClassID  := DefectNumericStruct.classId;	// Relation between classes and error IDs done in ST code again! (unique errorIDs across the classes)
-
-//_ErrorShortMsg := DefectErrorStruct.errorMsgShort;
-//_ErrorLongMsg := DefectErrorStruct.errorMsgLong;
-//_RemedMsg := DefectErrorStruct.remediationMsg;
-//_ClassMsg := DefectClassStruct.objDescriptMsg;
-
-
-IF __ISVALIDREF(DefectManager) THEN 
-	_DefectMngr REF= DefectManager;
+  _ErrorID  := DefectNumericStruct.errorId; // Now, three digits IDs!
+  _ClassID  := DefectNumericStruct.classId;	// Relation between classes and error IDs done in ST code again! (unique errorIDs across the classes)
 	
-//	FOR i:= 0 TO C.nNbrMaxDefaults_C DO	// C.nNbrMaxDefaults_C should be accessible through the DefectManager reference (or a property on its own).
-//		IF (i = C.nNbrMaxDefaults_C) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defaults is already full => Error
 	FOR i:= 0 TO _DefectMngr.nMaxDefaults DO	// C.nNbrMaxDefaults_C should be accessible through the DefectManager reference (or a property on its own).
 		IF (i = _DefectMngr.nMaxDefaults) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defaults is already full => Error
 			_DefectMngr.ArrayIsFull := TRUE;
-		ELSIF _DefectMngr.List(i,0) = THIS THEN // Default already in the list
+		ELSIF _DefectMngr.List(i,0) = THIS THEN // Defect already in the list
+      Register := _bRegistered := TRUE;
 			EXIT;
-		ELSIF _DefectMngr.List(i,0) = 0 THEN // Add Default in the list
+		ELSIF _DefectMngr.List(i,0) = 0 THEN // Add Defect in the list
 			_DefectMngr.List(i,THIS);
 			Register := _bRegistered := TRUE;
 			EXIT;
 		END_IF
 	END_FOR
+  
 END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Register2" Id="{a7901bd1-c164-497d-ab51-76fce6bb0b7b}">
+      <Declaration><![CDATA[METHOD PUBLIC Register2 : BOOL
+VAR_INPUT
+	DefectMngr    : REFERENCE TO CL_DefectManager;
+  inClassID	    :	STRING(3);
+  inErrorID     :	STRING(3);
+  nLine         : UINT; 
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_nMyLine := nLine;
+Register2 := Register(DefectMngr ,inClassID,inErrorID);]]></ST>
       </Implementation>
     </Method>
     <Property Name="RisingEdge" Id="{3bbddc04-efc2-4c4d-a5c0-96dcc27b9ebe}">

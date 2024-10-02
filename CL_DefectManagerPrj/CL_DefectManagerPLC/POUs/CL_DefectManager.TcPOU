@@ -231,7 +231,6 @@ IF NOT bInit AND _objErrorDB <> 0 AND _nMaxDefaults > 0 AND  _nMaxDefaultsView >
 	FOR i:= 0 TO _nMaxDefaults DO
     arList[i] := 0;
   END_FOR
-  //DoRegistration := TRUE;
  	bInit := Init := TRUE;
 END_IF
 

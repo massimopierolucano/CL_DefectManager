@@ -17,9 +17,9 @@
     <Implicit_Jitter_Distribution>{51a4d365-e3f9-4c9e-9284-8142424d1a1d}</Implicit_Jitter_Distribution>
     <LibraryReferences>{549e7324-26e3-44b6-b6f1-d3e724f0ec9c}</LibraryReferences>
     <Company>CleanGreensSA</Company>
-    <Released>true</Released>
+    <Released>false</Released>
     <Title>DefectManager_class</Title>
-    <ProjectVersion>1.06</ProjectVersion>
+    <ProjectVersion>1.1</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -39,7 +39,7 @@
       <Id xmlns="">{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
     </SelectedLibraryCategories>
     <Placeholder>CL_DefectManager</Placeholder>
-    <Description>class to handle defects</Description>
+    <Description>class to handle defects. Majour upgrade with several fixes</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DUTs\CL_Defect\E_DefectState.TcDUT">
@@ -67,9 +67,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\ITF_Defect.TcIO">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -117,8 +114,8 @@
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="OptionKey">
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
       <v n="Name">"&lt;ProjectRoot&gt;"</v>
       <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
         <v>{40450F57-0AA3-4216-96F3-5444ECB29763}</v>
@@ -139,13 +136,13 @@
       </d>
       <d n="Values" t="Hashtable" />
     </o>
-  </Data>
-  <TypeList>
-    <Type n="Hashtable">System.Collections.Hashtable</Type>
-    <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
     </PlcProjectOptions>
   </ProjectExtensions>
 </Project>

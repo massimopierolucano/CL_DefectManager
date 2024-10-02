@@ -57,10 +57,21 @@ END_VAR
     <Method Name="Register" Id="{0c8f1450-e6c4-45ec-9ce7-f94f42898776}">
       <Declaration><![CDATA[METHOD PUBLIC Register : BOOL
 VAR_INPUT
-	DefectManager	: REFERENCE TO CL_DefectManager;
-  inClassID	:	STRING(3);
-  inErrorID :	STRING(3);
+	DefectMngr  : REFERENCE TO CL_DefectManager;
+  inClassID	  :	STRING(3);
+  inErrorID   :	STRING(3);
 END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Register2" Id="{2b00cd0f-8cbb-4cf2-a4c4-1886142ce12d}">
+      <Declaration><![CDATA[METHOD PUBLIC Register2 : BOOL
+VAR_INPUT
+	DefectMngr    : REFERENCE TO CL_DefectManager;
+  inClassID	    :	STRING(3);
+  inErrorID     :	STRING(3);
+  nLine         : UINT; 
+END_VAR
+
 ]]></Declaration>
     </Method>
     <Property Name="RisingEdge" Id="{57bdadbd-21fa-41dd-a3d4-afc667e0ae4e}">
