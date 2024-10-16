@@ -81,9 +81,8 @@
       <DefaultResolution>CL_ErrorsDatabase, * (CleanGreensSA)</DefaultResolution>
       <Namespace>CL_ErrorsDatabase</Namespace>
     </PlaceholderReference>
-    <PlaceholderReference Include="CL_CleanGreensObjectsLibrary">
+    <PlaceholderReference Include="CGS_ObjectsLibrary">
       <DefaultResolution>CL_CleanGreensObjectsLibrary, * (CleanGreens SA)</DefaultResolution>
-      <Namespace>CGS_ObjectsLibrary</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Database">
       <DefaultResolution>Tc2_Database, * (Beckhoff Automation GmbH)</DefaultResolution>
