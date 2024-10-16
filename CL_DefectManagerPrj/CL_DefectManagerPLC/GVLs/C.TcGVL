@@ -3,9 +3,12 @@
   <GVL Name="C" Id="{b637d4a5-b39c-4bf9-8f55-3f1254518ed6}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL CONSTANT
-  //Defect manager constants
-	nMaxDefaults_C    							      : INT := 700; 
-	nMaxDefaultsView_C   							    : INT := 20;
+  //Defect manager library constants max array size
+  nDefectTableStrLen_C        : UINT := 40;
+	nMaxDefects_C    		        : UINT := 1000;
+	nMaxDefectsView_C           : UINT := 40;
+  tInfoOffTimeout_C           : TIME := T#5S; 
+  tInfoOffAndNotAckTimeout_C  : TIME := T#15S;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

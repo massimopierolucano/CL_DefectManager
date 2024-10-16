@@ -7,6 +7,32 @@
       <Declaration><![CDATA[METHOD Ack
 ]]></Declaration>
     </Method>
+    <Method Name="BuildStringMsg" Id="{580b25fe-5b64-4c0e-b775-26b897c582d2}">
+      <Declaration><![CDATA[METHOD PUBLIC BuildStringMsg : BOOL
+//return false if no error 
+VAR_INPUT
+	sMsgOut_P               : POINTER TO T_StringBuffer;//return the Telegram message
+  sTextOut_P              : POINTER TO T_StringBuffer;//return the ADS console message  
+	bConsoleMsg             : BOOL := FALSE;
+  
+	bShowIstance            : BOOL := FALSE;
+  bShowLongClass          : BOOL := FALSE;
+  bShowLongError          : BOOL := FALSE;
+  bShowRemedMsg           : BOOL := FALSE;
+END_VAR]]></Declaration>
+    </Method>
+    <Property Name="CanSendAlarmMsg" Id="{b74b50b0-24ef-43f2-a79b-586bccdc223d}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendAlarmMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{f766fca7-db9a-4a42-9baf-68f3cafb7e70}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CanSendRegisterMsg" Id="{f46677d4-0f1e-4379-b48f-f4f8136faa61}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendRegisterMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{e2d9cdba-52b6-4b87-9745-0642f2d63740}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
     <Property Name="ClassID" Id="{78ac3cfb-ecd0-4b8d-afd5-ac03869092ed}">
       <Declaration><![CDATA[PROPERTY ClassID : STRING(3)]]></Declaration>
       <Get Name="Get" Id="{35d24f09-3a95-4116-ac76-77bf31646393}">
@@ -20,34 +46,11 @@
       </Get>
     </Property>
     <Property Name="FallingEdge" Id="{86f0caa9-846e-4ade-aa41-e10b149927f4}">
-      <Declaration><![CDATA[PROPERTY FallingEdge : T_MaxString]]></Declaration>
+      <Declaration><![CDATA[PROPERTY FallingEdge : DATE_AND_TIME]]></Declaration>
       <Get Name="Get" Id="{fab1dcdc-5d8c-40fe-b596-866f5b2753ce}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
-    <Method Name="GetStringMsg" Id="{580b25fe-5b64-4c0e-b775-26b897c582d2}">
-      <Declaration><![CDATA[METHOD PUBLIC GetStringMsg : BOOL
-//return false if no error 
-VAR_INPUT
-	sMsgOut 				    : POINTER TO STRING(3000);
-  sInfoConsoleOut     : POINTER TO T_MAXSTRING;
-	sClassMsgConsoleOut	:	POINTER TO T_MAXSTRING;
-	sErrMsgConsoleOut   : POINTER TO T_MAXSTRING;
-  sCorrMsgConsoleOut  : POINTER TO T_MAXSTRING;
-	BuildConsoleMsg	    : BOOL;
-	bShowPath				: BOOL := false;
-END_VAR
-//VAR
-//	fbFormatStr	  : FB_FormatString;
-//	severityStr	  : T_MaxString;
-//	stateStr      : T_MaxString;
-//	ErrorIDStr	  : T_MaxString;
-//  ClassIDStr    : T_MaxString;
-//  sRemedMsgAdd  : STRING            := '%%0A Error Correction: %%0A'; // To use only for Telegram messages
-//	bTmpErr			  : BOOL;
-//	bTmp1Err		  : BOOL;
-//END_VAR]]></Declaration>
-    </Method>
     <Property Name="InstancePath" Id="{6dc0f06c-9792-4a70-af22-59e9811e051e}">
       <Declaration><![CDATA[PROPERTY InstancePath : T_InstancePath]]></Declaration>
       <Get Name="Get" Id="{86a329a7-002c-460f-ba14-5ef9adc6dbdb}">
@@ -63,26 +66,9 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
     </Method>
-    <Method Name="Register2" Id="{2b00cd0f-8cbb-4cf2-a4c4-1886142ce12d}">
-      <Declaration><![CDATA[METHOD PUBLIC Register2 : BOOL
-VAR_INPUT
-	DefectMngr    : REFERENCE TO CL_DefectManager;
-  inClassID	    :	STRING(3);
-  inErrorID     :	STRING(3);
-  nLine         : UINT; 
-END_VAR
-
-]]></Declaration>
-    </Method>
     <Property Name="RisingEdge" Id="{57bdadbd-21fa-41dd-a3d4-afc667e0ae4e}">
-      <Declaration><![CDATA[PROPERTY RisingEdge : T_MaxString]]></Declaration>
+      <Declaration><![CDATA[PROPERTY RisingEdge : DATE_AND_TIME]]></Declaration>
       <Get Name="Get" Id="{0e4552db-98d7-4413-bc07-c6c1450bb1c0}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Get>
-    </Property>
-    <Property Name="SendRegisterMsg" Id="{f46677d4-0f1e-4379-b48f-f4f8136faa61}">
-      <Declaration><![CDATA[PROPERTY PUBLIC SendRegisterMsg : BOOL]]></Declaration>
-      <Get Name="Get" Id="{e2d9cdba-52b6-4b87-9745-0642f2d63740}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
@@ -90,12 +76,6 @@ END_VAR
       <Declaration><![CDATA[METHOD Set
 VAR_INPUT
   Activate : BOOL;
-END_VAR
-]]></Declaration>
-    </Method>
-    <Method Name="SetOff" Id="{2222f6a5-148f-4037-84ba-02620e50283a}">
-      <Declaration><![CDATA[METHOD PUBLIC SetOff : BOOL
-VAR_INPUT
 END_VAR
 ]]></Declaration>
     </Method>
@@ -114,12 +94,6 @@ END_VAR
     <Property Name="State" Id="{e9b7f28b-da9f-449b-aaec-ffd6d6f5e638}">
       <Declaration><![CDATA[PROPERTY State : E_DefectState]]></Declaration>
       <Get Name="Get" Id="{ae3bcc9b-957e-49f6-9bed-f6fa7d9acdb2}">
-        <Declaration><![CDATA[]]></Declaration>
-      </Get>
-    </Property>
-    <Property Name="TelegramMsgSend" Id="{b74b50b0-24ef-43f2-a79b-586bccdc223d}">
-      <Declaration><![CDATA[PROPERTY PUBLIC TelegramMsgSend : BOOL]]></Declaration>
-      <Get Name="Get" Id="{f766fca7-db9a-4a42-9baf-68f3cafb7e70}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>

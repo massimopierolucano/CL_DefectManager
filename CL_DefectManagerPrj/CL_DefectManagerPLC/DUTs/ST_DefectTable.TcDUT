@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_DefectTable" Id="{cf38894e-519c-4c1d-85d5-079b920fd2fe}">
+    <Declaration><![CDATA[TYPE ST_DefectTable :
+STRUCT
+  bHideDefect   : BOOL := TRUE;
+	State         : E_DefectState := E_DefectState.None;
+	Severity      : TcEventSeverity := TcEventSeverity.Verbose;
+	ErrorID       : STRING(3) :='';
+	ClassID       : STRING(3) :='';
+	Color         : DWORD := 0;
+  InstancePath  : T_InstancePath := '';
+	Description   : T_MaxString := '';
+	RisingEdge    : STRING(C.nDefectTableStrLen_C) := '';;
+	FallingEdge   : STRING(C.nDefectTableStrLen_C) := '';;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

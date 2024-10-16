@@ -18,8 +18,8 @@
     <LibraryReferences>{549e7324-26e3-44b6-b6f1-d3e724f0ec9c}</LibraryReferences>
     <Company>CleanGreensSA</Company>
     <Released>true</Released>
-    <Title>DefectManager_class</Title>
-    <ProjectVersion>1.7</ProjectVersion>
+    <Title>CL_DefectManager</Title>
+    <ProjectVersion>2.0</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -38,20 +38,21 @@
     <SelectedLibraryCategories>
       <Id xmlns="">{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
     </SelectedLibraryCategories>
-    <Placeholder>CL_DefectManager</Placeholder>
-    <Description>class to handle defects. Majour upgrade with several fixes</Description>
+    <Placeholder>DefectManager</Placeholder>
+    <Description>class to handle defects. Majour upgrade with several fixes and dynamic allocation</Description>
+    <Author>Massimo Lucano</Author>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DUTs\CL_Defect\E_DefectState.TcDUT">
+    <Compile Include="DUTs\E_DefectState.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\CL_Defect\ST_DefectTable.TcDUT">
+    <Compile Include="DUTs\ST_DefectTable.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\CL_Defect\T_DefectErrorID.TcDUT">
+    <Compile Include="DUTs\T_DefectErrorID.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\CL_Defect\T_InstancePath.TcDUT">
+    <Compile Include="DUTs\T_InstancePath.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GVLs\C.TcGVL">
@@ -72,15 +73,17 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DUTs" />
-    <Folder Include="DUTs\CL_Defect" />
     <Folder Include="GVLs" />
-    <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>
   <ItemGroup>
-    <PlaceholderReference Include="CL_errorDB">
-      <DefaultResolution>ErrorDatabase_class, * (CleanGreensSA)</DefaultResolution>
-      <Namespace>ErrorDatabase_class</Namespace>
+    <PlaceholderReference Include="CGS_ErrorsDatabase">
+      <DefaultResolution>CL_ErrorsDatabase, * (CleanGreensSA)</DefaultResolution>
+      <Namespace>CL_ErrorsDatabase</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="CL_CleanGreensObjectsLibrary">
+      <DefaultResolution>CL_CleanGreensObjectsLibrary, * (CleanGreens SA)</DefaultResolution>
+      <Namespace>CGS_ObjectsLibrary</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Database">
       <DefaultResolution>Tc2_Database, * (Beckhoff Automation GmbH)</DefaultResolution>

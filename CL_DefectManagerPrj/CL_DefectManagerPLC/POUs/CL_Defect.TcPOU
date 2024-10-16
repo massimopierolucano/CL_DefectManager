@@ -4,48 +4,275 @@
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK CL_Defect IMPLEMENTS ITF_Defect
 VAR
-  _nMyLine            : UINT; 
-  //_nLine is either the GHSpan or the Irrigation line.  The irrigation line is some installation coincides with the GHSpan, in other installation is one of the 2 lines of the GHSpan
-	_State              : E_DefectState := E_DefectState.None; 
+ 	_State              : E_DefectState := E_DefectState.None; 
 	
 	_ErrorIndex					:	UDINT;
 	_ClassIndex					:	UDINT;
 	
-  _ErrorID            : STRING(3);  // Maybe a wrapping type might be interesting!
+  _ErrorID            : STRING(3);
   _ClassID            : STRING(3);
+  
 	_DefectMngr	        : REFERENCE TO CL_DefectManager;
 	_bRegistered		    : BOOL := FALSE;
 	
 	_Severity           : TcEventSeverity := TcEventSeverity.Critical;//temporary solution without database
 		
 	//used to send Telegram msg
-	bTelegramSent		    : BOOL := FALSE;
-	bRegisteredSent	    : BOOL := FALSE;
+	bTelAlarmSent       : BOOL := FALSE;
+  bTelInfoSent        : BOOL := FALSE;
+	bTelRegisteredSent	: BOOL := FALSE;
+  
+  bHideDefect	        : BOOL := true;
 	
-	_RisingEdge         : T_MaxString;
-	_FallingEdge		    : T_MaxString;
+	_RisingEdge         : DATE_AND_TIME;//STRING(32);
+	_FallingEdge		    : DATE_AND_TIME;//STRING(32);
 	
 	{attribute 'instance-path'}
 	{attribute 'no_init'}
 	_InstancePath       : T_InstancePath;
-	InstanceStr_P		    : POINTER TO STRING(1000);
+	InstanceStr_P		    : POINTER TO T_StringBuffer;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
     <Method Name="Ack" Id="{8c29abf3-50d7-4b45-a275-99bb2ba3662b}">
-      <Declaration><![CDATA[METHOD Ack
+      <Declaration><![CDATA[METHOD PUBLIC Ack
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF State = E_DefectState.Active THEN
   _State := E_DefectState.ActiveAndAck;
 ELSIF State = E_DefectState.OffAndNotAck THEN
   _State := E_DefectState.Off;
-	bTelegramSent := FALSE;
+	DefectSentToFalse();
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="BuildStringMsg" Id="{3fbf6b19-dcd9-467d-b8c9-5e6a3e80236d}">
+      <Declaration><![CDATA[METHOD PUBLIC BuildStringMsg : BOOL
+//return false if no error 
+VAR_INPUT
+	sMsgOut_P               : POINTER TO T_StringBuffer;//return the Telegram message
+  sTextOut_P              : POINTER TO T_StringBuffer;//return the ADS console message  
+	bConsoleMsg             : BOOL := FALSE;
+  
+	bShowIstance            : BOOL := FALSE;
+  bShowLongClass          : BOOL := FALSE;
+  bShowLongError          : BOOL := FALSE;
+  bShowRemedMsg           : BOOL := FALSE;
+END_VAR
+VAR
+	bTmpErr			            : BOOL;
+	bTmp1Err		            : BOOL;
+  nErrIdOut               : UDINT;
+	fbFormatStr	            : FB_FormatString;
+  
+	severityStr	            : T_MaxString;
+	stateStr                : T_MaxString;
+	sMsgAddLine	                :	T_MaxString;
+  sMsgTmp                 : T_MaxString;
+  sClassID                : T_MaxString;
+  sErrorID                : T_MaxString;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[BuildStringMsg := FALSE;
+sClassID := _ClassID;
+sErrorID := _ErrorID;
+
+CASE _State OF
+		E_DefectState.None : stateStr := 'None';
+		E_DefectState.Off : stateStr := 'Off';
+		E_DefectState.Active : stateStr := 'Active';
+		E_DefectState.ActiveAndAck : stateStr := 'ActiveAndAck';
+		E_DefectState.OffAndNotAck : stateStr := 'OffAndNotAck';
+END_CASE
+
+CASE _Severity OF
+		TcEventSeverity.Critical : severityStr := 'Critical';
+		TcEventSeverity.Error : severityStr := 'Error';
+		TcEventSeverity.Info : severityStr := 'Info';
+		TcEventSeverity.Verbose : severityStr := 'Verbose';
+		TcEventSeverity.Warning : severityStr := 'Warning';
+END_CASE
+
+IF bConsoleMsg AND (sTextOut_P<>0) THEN 
+  // Shorter, because issue for too long strings 
+  IF C.uiNumIrrLinesForHMI_C <= 1 THEN
+    IF _DefectMngr.MRIrrLine = 0 THEN
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLineFixedID);
+      sMsgAddLine := concat('Main cabinet ',sMsgAddLine);
+      sMsgAddLine := concat(sMsgAddLine,' - ');
+    ELSE
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLineFixedID);
+      sMsgAddLine := concat('Line ',sMsgAddLine);
+      sMsgAddLine := concat(sMsgAddLine,' - ');    
+		END_IF
+  ELSE
+    IF _DefectMngr.MRIrrLine = 0 THEN
+      sMsgAddLine := 'for all lines';
+      sMsgAddLine := concat('Main cabinet ',sMsgAddLine);
+      sMsgAddLine := concat(sMsgAddLine,' - ');
+    ELSE
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLine);
+      sMsgAddLine := concat('Line ',sMsgAddLine);
+      sMsgAddLine := concat(sMsgAddLine,' - ');
+ 	  END_IF
+  END_IF
+  
+  fbFormatStr(
+    //sFormat	:= '$N ClassID: %s  ErrID: %s  Status: %s  Severity: %s $N InstancePath: %s $N Message sender: Line %s - ', 
+    //sFormat	:= '$N Severity: %s  Status: %s  ClassID: %s  ErrID: %s $N InstancePath: %s $N Message sender: Line %s - ', 
+    sFormat	:= '$N Severity: %s  Status: %s  ClassID: %s  ErrID: %s $N InstancePath: %s $N Message sender: %s', 
+    arg1  := F_STRING(severityStr),
+    arg2	:= F_STRING(stateStr),
+    arg3	:= F_STRING(sClassID),
+    arg4	:= F_STRING(sErrorID), 
+    arg5	:= F_STRING(_InstancePath),
+    arg6  := F_STRING(sMsgAddLine),
+    bError => bTmp1Err,  
+    nErrId => nErrIdOut, 
+    sOut	=> sTextOut_P^);
+  
+  IF bTmp1Err THEN
+    sMsgTmp := ' FB_FormatStr Error : $N ';
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+    sMsgTmp := UDINT_TO_STRING(nErrIdOut);
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+    sMsgTmp := ' $N ';
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+	END_IF
+ 
+  //concat class description short
+  IF NOT bTmpErr THEN
+    sMsgTmp := _DefectMngr.ErrorDB.GetClassShortMsg(_ClassIndex);
+    sMsgTmp := concat(sMsgTmp,'$N');
+    bTmpErr := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+  END_IF	
+   
+  //concat error description short
+  IF NOT bTmp1Err THEN
+    sMsgTmp := ' Message description: ';	
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+  END_IF
+  IF NOT bTmp1Err THEN
+    sMsgTmp := _DefectMngr.ErrorDB.GetErrorShortMsg(_ErrorIndex);     
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+  END_IF	
+  //concat twice new line
+  IF NOT bTmp1Err THEN
+    sMsgTmp := ' $N $N';	
+    bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+  END_IF  
+ELSE
+  bTmp1Err := TRUE;
+END_IF
+
+//Telegram API new line character is %0A
+//to insert it inside format string the Telegram use %%0A, while inside concat use %0A
+//build the sMsgOut_P string buffers used to sent Telegram message
+IF sMsgOut_P <>0 THEN
+	bTmpErr := FALSE;
+	IF bShowIstance THEN 
+		fbFormatStr(
+      //sFormat	:= '%%0AClassID: %S  ErrID: %S  Status: %S  Severity: %S %%0AInstancePath: %S %%0A',//MyLine: %S  
+      sFormat	:= '%%0ASeverity: %S  Status: %S  ClassID: %S  ErrID: %S %%0AInstancePath: %S %%0AMessage sender: %s',
+      arg1  := F_STRING(severityStr),
+      arg2	:= F_STRING(stateStr),
+      arg3	:= F_STRING(sClassID),
+      arg4	:= F_STRING(sErrorID), 
+      arg5	:= F_STRING(_InstancePath),
+      arg6  := F_STRING(sMsgAddLine),    
+      bError	=> bTmpErr,  
+      nErrId	=> nErrIdOut, 
+      sOut	=> sMsgOut_P^);
+	ELSE
+		fbFormatStr(
+      sFormat	:= '%%0ASeverity: %S  Status: %S  ClassID: %S  ErrID: %S %%0AMessage sender: %s',
+      arg1  := F_STRING(severityStr),
+      arg2	:= F_STRING(stateStr),
+      arg3	:= F_STRING(sClassID),
+      arg4	:= F_STRING(sErrorID), 
+      arg5  := F_STRING(sMsgAddLine),    
+      bError	=> bTmpErr,  
+      nErrId	=> nErrIdOut, 
+      sOut	=> sMsgOut_P^);
+	END_IF
+  
+  //build class description
+  IF bShowLongClass THEN
+    TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetClassLongMsg(_ClassIndex), sTelegramMsg => sMsgTmp);
+  ELSE
+    TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetClassShortMsg(_ClassIndex), sTelegramMsg => sMsgTmp);
+	END_IF  
+  IF NOT bTmpErr THEN
+    sMsgTmp := concat(sMsgTmp,'%0A');
+    bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
+  END_IF	
+  
+  //build error description either long or short
+  IF NOT bTmpErr THEN
+    sMsgTmp := 'Message description:%0A';	
+    bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
+  END_IF
+  IF bShowLongError THEN
+    TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorLongMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
+  ELSE
+    TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorShortMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
+	END_IF  
+  IF NOT bTmpErr THEN
+    bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
+  END_IF	
+
+  //build remed description
+  IF NOT bTmpErr AND bShowRemedMsg THEN
+    sMsgAddLine := '%0A Correction:%0A';
+    bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgAddLine),sMsgOut_P,SIZEOF(T_StringBuffer));
+  END_IF   
+  IF NOT bTmpErr AND bShowRemedMsg THEN
+    TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorRemedMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
+    bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
+  END_IF
+  
+END_IF//sMsgOut_P <>0 THEN
+BuildStringMsg := NOT(bTmpErr OR bTmp1Err);]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CanSendAlarmMsg" Id="{a204988a-66ae-47e9-a056-f119d2f2e1ba}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendAlarmMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{fcd35725-5151-4b31-99ff-e0af66c76ec1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CanSendAlarmMsg := NOT bTelAlarmSent AND _bRegistered;
+bTelAlarmSent := TRUE;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CanSendInfoMsg" Id="{192a9537-1f8b-4f9f-8333-df16e40a98d8}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendInfoMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{7714ed16-8869-4a97-8f77-d66a6e2e078b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CanSendInfoMsg := NOT bTelInfoSent AND _bRegistered;
+bTelInfoSent := TRUE;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CanSendRegisterMsg" Id="{85b1138c-1583-4d32-9377-41c32d7e3328}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendRegisterMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{d973e6bb-7bdd-451e-850c-2191c15990ae}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CanSendRegisterMsg := NOT bTelRegisteredSent AND _bRegistered;//bTelRegisteredSent = false only at Init time
+bTelRegisteredSent := TRUE;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="ClassID" Id="{5a02e236-d319-41d8-895b-af4b89567a56}">
       <Declaration><![CDATA[PROPERTY PUBLIC ClassID : STRING(3)]]></Declaration>
       <Get Name="Get" Id="{ee0c912f-d8aa-4c70-ad6f-6db4079577d0}">
@@ -57,6 +284,16 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
+    <Method Name="DefectSentToFalse" Id="{b4454f50-ebd6-42cd-b04e-fa0b98d6b46d}">
+      <Declaration><![CDATA[METHOD PUBLIC DefectSentToFalse
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bTelAlarmSent := FALSE;
+bTelInfoSent := FALSE;]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="Description" Id="{b79e4a6d-6da3-4efa-a729-3209c771b301}">
       <Declaration><![CDATA[PROPERTY PUBLIC Description : String]]></Declaration>
       <Get Name="Get" Id="{a592b11a-fd05-4787-8a73-0f741ccc819f}">
@@ -65,7 +302,7 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[//Description := CONCAT(_ErrorLongMsg,_RemedMsg);
-Description := _DefectMngr.objErrorDB^.GetErrorShortMsg(_ErrorIndex);]]></ST>
+Description := _DefectMngr.ErrorDB.GetErrorShortMsg(_ErrorIndex);]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -81,7 +318,7 @@ END_VAR
       </Get>
     </Property>
     <Property Name="FallingEdge" Id="{de0092e2-cbb0-4fc0-96e3-eb37533d6ae8}">
-      <Declaration><![CDATA[PROPERTY PUBLIC FallingEdge : T_MaxString]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC FallingEdge : DATE_AND_TIME]]></Declaration>
       <Get Name="Get" Id="{71166727-89f7-4d09-8ce0-f501c1c7b9ed}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -112,161 +349,17 @@ pos := FIND2(InstanceStr_P,ADR('.'));
 DELETE2(InstanceStr_P,InstanceStr_P,SIZEOF(InstanceStr_P^),pos,1);//delete PLC name]]></ST>
       </Implementation>
     </Method>
-    <Method Name="GetStringMsg" Id="{3fbf6b19-dcd9-467d-b8c9-5e6a3e80236d}">
-      <Declaration><![CDATA[METHOD PUBLIC GetStringMsg : BOOL
-//return false if no error 
-VAR_INPUT
-	sMsgOut 				    : POINTER TO STRING(3000);
-  sInfoConsoleOut     : POINTER TO T_MAXSTRING;
-	sClassMsgConsoleOut	:	POINTER TO T_MAXSTRING;
-	sErrMsgConsoleOut   : POINTER TO T_MAXSTRING;
-  sCorrMsgConsoleOut  : POINTER TO T_MAXSTRING;
-	BuildConsoleMsg	    : BOOL;
-	bShowPath				    : BOOL := FALSE;
+    <Property Name="HideDefect" Id="{7c8e1473-279e-4978-bb72-35ce6dc53176}">
+      <Declaration><![CDATA[PROPERTY PUBLIC HideDefect : bool]]></Declaration>
+      <Get Name="Get" Id="{c900ab48-394c-484a-b09d-b7bbae2c96b3}">
+        <Declaration><![CDATA[VAR
 END_VAR
-VAR
-	fbFormatStr	        : FB_FormatString;
-	severityStr	        : T_MaxString;
-	stateStr            : T_MaxString;
-	ErrorIDStr	        : T_MaxString;
-  ClassIDStr          : T_MaxString;
-  sRemedMsgAdd        : STRING            := ' %0A Error Correction: %0A '; // To use only for Telegram messages
-	sErrorMsgAdd	      :	STRING						:= ' %0A  Error description: %0A ';
-	bTmpErr			        : BOOL;
-	bTmp1Err		        : BOOL;
-	
-	// Error messages formated for Telegram
-	sTelegramErrorMsg   :	STRING(255);
-	sTelegramRemedMsg   :	STRING(255);
-	sTelegramClassMsg   :	STRING(255);
-	
-	// Temporary strings for the F_String functions (need Read/Write access)
-	sADSErrorMsg        :	STRING(255);
-	sADSRemedMsg        :	STRING(255);
-	sADSClassMsg        :	STRING(255);
-	
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[GetStringMsg := FALSE;
-
-CASE _State OF
-		E_DefectState.None : stateStr := 'None';
-		E_DefectState.Off : stateStr := 'Off';
-		E_DefectState.Active : stateStr := 'Active';
-		E_DefectState.ActiveAndAck : stateStr := 'ActiveAndAck';
-		E_DefectState.OffAndNotAck : stateStr := 'OffAndNotAck';
-END_CASE
-
-CASE _Severity OF
-		TcEventSeverity.Critical : severityStr := 'Critical';
-		TcEventSeverity.Error : severityStr := 'Error';
-		TcEventSeverity.Info : severityStr := 'Info';
-		TcEventSeverity.Verbose : severityStr := 'Verbose';
-		TcEventSeverity.Warning : severityStr := 'Warning';
-END_CASE
-
-ErrorIDStr := _ErrorID;
-ClassIDStr := _ClassID;
-
-sADSErrorMsg	:= _DefectMngr.objErrorDB^.GetErrorLongMsg(_ErrorIndex);
-sADSRemedMsg	:= _DefectMngr.objErrorDB^.GetErrorRemedMsg(_ErrorIndex);
-sADSClassMsg	:= _DefectMngr.objErrorDB^.GetClassMsg(_ClassIndex);
-
-bTmp1Err := FALSE;
-IF BuildConsoleMsg AND (sInfoConsoleOut<>0) AND (sErrMsgConsoleOut<>0) AND (sCorrMsgConsoleOut<>0) THEN // Shorter, because issue for too long strings (T_maxlength) => To modify if needed (Telegram API,...).
-	fbFormatStr(
-		sFormat	:= ' ClassID: %s $N ErrID: %s $N Status: %s $N Severity: %s $N IstancePath/Location: %s', 
-		arg1	:= F_STRING(ClassIDStr),
-    arg2	:= F_STRING(ErrorIDStr), 
-		arg3	:= F_STRING(stateStr), 
-		arg4  := F_STRING(severityStr),
-		arg5	:= F_STRING(_InstancePath),
-		bError	=> bTmp1Err,  
-		nErrId	=> , 
-		sOut	=> sInfoConsoleOut^);	
-
-		IF NOT bTmp1Err THEN  // If first message not correctly formated, the latter shouldn't be generated
-		fbFormatStr(
-		sFormat	:= ' Sender of the error (object): %s', 
-      arg1	:= F_STRING(sADSClassMsg), // Necessary, since type T_Arg as input of fbFormatStr
-      bError	=> bTmp1Err,  
-      nErrId	=> , 
-      sOut	=> sClassMsgConsoleOut^);	
-	END_IF	
-	
-	IF NOT bTmp1Err THEN  // If first message not correctly formated, the latter shouldn't be generated
-		fbFormatStr(
-		sFormat	:= ' Error description: %s', 
-      arg1	:= F_STRING(sADSErrorMsg), 
-      bError	=> bTmp1Err,  
-      nErrId	=> , 
-      sOut	=> sErrMsgConsoleOut^);	
-	END_IF	
-  
-	IF NOT bTmp1Err THEN  // If first message not correctly formated, the latter shouldn't be generated
-		fbFormatStr(
-		sFormat	:= ' Error correction: %s', 
-      arg1	:= F_STRING(sADSRemedMsg), 
-      bError	=> bTmp1Err,  
-      nErrId	=> , 
-      sOut	=> sCorrMsgConsoleOut^);	
-	END_IF	
-  
-END_IF
-
-//Telegram API new line character is %0A
-//to insert it inside la format string the Telegram use %%0A
-IF sMsgOut<>0 THEN
-	bTmpErr := FALSE;
-	
-	IF bShowPath THEN 
-		fbFormatStr(
-		sFormat	:= ' ClassID: %s %%0A ErrID: %s %%0A Status: %s %%0A Severity: %s %%0A InstancePath: %s %%0A Sender of the error (object): %%0A ', 
-		arg1	:= F_STRING(ClassIDStr), 
-    arg2	:= F_STRING(ErrorIDStr),
-		arg3	:= F_STRING(stateStr), 
-		arg4  := F_STRING(severityStr),
-		arg5	:= F_STRING(_InstancePath),
-		bError	=> bTmpErr,  
-		nErrId	=> , 
-		sOut	=> sMsgOut^);
-	ELSE
-		fbFormatStr(
-			sFormat	:= ' ClassID: %s %%0A ErrID: %s %%0A Severity: %s %%0A Sender of the error (object): %%0A ', 
-			arg1	:= F_STRING(ClassIDStr), 
-    		arg2	:= F_STRING(ErrorIDStr),
-			arg3  := F_STRING(severityStr),
-			bError	=> bTmpErr,  
-			nErrId	=> , 
-			sOut	=> sMsgOut^);				
-	END_IF
-		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetErrorLongMsg(_ErrorIndex), sTelegramMsg => sTelegramErrorMsg);
-		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetErrorRemedMsg(_ErrorIndex), sTelegramMsg => sTelegramRemedMsg);
-		THIS^.TelegramMsgConvert(sDatabaseMsg := _DefectMngr.objErrorDB^.GetClassMsg(_ClassIndex), sTelegramMsg => sTelegramClassMsg);
-		
-		IF NOT bTmpErr THEN
-			bTmpErr := NOT CONCAT2(sMsgOut,ADR(sTelegramClassMsg),sMsgOut,SIZEOF(sMsgOut^));
-		END_IF	
-    // Only allowed if former transaction succeeded
-    IF NOT bTmpErr THEN
-			bTmpErr := NOT CONCAT2(sMsgOut,ADR(sErrorMsgAdd),sMsgOut,SIZEOF(sMsgOut^));
-		END_IF
-		// Only allowed if former transaction succeeded
-		IF NOT bTmpErr THEN
-			bTmpErr := NOT CONCAT2(sMsgOut,ADR(sTelegramErrorMsg),sMsgOut,SIZEOF(sMsgOut^));
-		END_IF	
-    // Only allowed if former transaction succeeded
-    IF NOT bTmpErr THEN
-			bTmpErr := NOT CONCAT2(sMsgOut,ADR(sRemedMsgAdd),sMsgOut,SIZEOF(sMsgOut^));
-		END_IF
-    // Only allowed if former transaction succeeded
-    IF NOT bTmpErr THEN
-			bTmpErr := NOT CONCAT2(sMsgOut,ADR(sTelegramRemedMsg),sMsgOut,SIZEOF(sMsgOut^));
-		END_IF
-END_IF
-GetStringMsg := NOT(bTmpErr OR bTmp1Err);]]></ST>
-      </Implementation>
-    </Method>
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[HideDefect := bHideDefect;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="InstancePath" Id="{f3a6bf0d-6cba-496a-bcdc-0381f12508b3}">
       <Declaration><![CDATA[PROPERTY PUBLIC InstancePath : T_InstancePath]]></Declaration>
       <Get Name="Get" Id="{f9e4f5ef-8538-4a6a-9c64-fe9d0ca0ceda}">
@@ -286,38 +379,44 @@ VAR_INPUT
   inErrorID     :	STRING(3);
 END_VAR
 VAR
-	i: INT;
-	ArrayIsFull: INT;
-	b : BOOL;
+	i                   : UINT;
+	ArrayIsFull         : INT;
 	indDefectLine       : UDINT;
-	//DefectErrorStruct   : ST_SP_RecordReturn; // Only way to have access to a particular line in the DB.
-	//DefectClassStruct	  :	ST_SP_ClassReturn;
 	DefectNumericStruct	:	ST_classAndErrorNum;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[Register := _bRegistered := FALSE;
 IF __ISVALIDREF(DefectMngr) THEN 
+  _ErrorID := inErrorID;
+  _ClassID := inClassID;
+  
+  bHideDefect := true;
 	_DefectMngr REF= DefectMngr;
-  _nMyLine := _DefectMngr.ThisLine;
+  
   //this part of code was not inside IF __ISVALIDREF(DefectManager)...we have to check before all that the reference to the DefectManager is good
   // Only way to have access to elements of an object stored into another one: method to extract the whole object!
   // TwinCAT or ST limitations!
   _DefectMngr.SearchDefectDB(errorID := inErrorID, classID := inClassID, udiDBErrorIndex => _ErrorIndex, udiDBClassIndex => _ClassIndex);
-  DefectNumericStruct := _DefectMngr.objErrorDB^.GetNumerics(udiErrorIndex := _ErrorIndex, udiClassIndex := _ClassIndex);
   
-  CASE _DefectMngr.objErrorDB^.WhichSeverity(_ErrorIndex) OF
+  (*
+  DefectNumericStruct := _DefectMngr.ErrorDB.GetNumerics(udiErrorIndex := _ErrorIndex, udiClassIndex := _ClassIndex);  @@really buggy this method sometime it return ErrorID or ClassID wrong sometime not!!
+  _ErrorID  := DefectNumericStruct.errorId; // Now, three digits IDs!
+  _ClassID  := DefectNumericStruct.classId;	// Relation between classes and error IDs done in ST code again! (unique errorIDs across the classes)
+  *)
+  
+  CASE _DefectMngr.ErrorDB.WhichSeverity(_ErrorIndex) OF
       0:  _Severity := TcEventSeverity.Verbose;
       1:  _Severity := TcEventSeverity.Info;
       2:  _Severity := TcEventSeverity.Warning;
       3:  _Severity := TcEventSeverity.Error;
       4:  _Severity := TcEventSeverity.Critical;
   END_CASE
-  _ErrorID  := DefectNumericStruct.errorId; // Now, three digits IDs!
-  _ClassID  := DefectNumericStruct.classId;	// Relation between classes and error IDs done in ST code again! (unique errorIDs across the classes)
 	
-	FOR i:= 0 TO _DefectMngr.nMaxDefaults DO	// C.nNbrMaxDefaults_C should be accessible through the DefectManager reference (or a property on its own).
-		IF (i = _DefectMngr.nMaxDefaults) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defaults is already full => Error
-			_DefectMngr.ArrayIsFull := TRUE;
+	FOR i:= 1 TO _DefectMngr.nMaxDefects DO	
+		IF (i = _DefectMngr.nMaxDefects) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defects is already full => Error
+			G.IRS_R.FatalExecutionError := TRUE;
+      _DefectMngr.ArrayIsFull := TRUE;
+      ADSLOGSTR(ADSLOG_MSGTYPE_MSGBOX, 'Fatal error: too many defects: increase the array size and recompile','');
 		ELSIF _DefectMngr.List(i,0) = THIS THEN // Defect already in the list
       Register := _bRegistered := TRUE;
 			EXIT;
@@ -331,41 +430,14 @@ IF __ISVALIDREF(DefectMngr) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="Register2" Id="{a7901bd1-c164-497d-ab51-76fce6bb0b7b}">
-      <Declaration><![CDATA[METHOD PUBLIC Register2 : BOOL
-VAR_INPUT
-	DefectMngr    : REFERENCE TO CL_DefectManager;
-  inClassID	    :	STRING(3);
-  inErrorID     :	STRING(3);
-  nLine         : UINT; 
-END_VAR
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[_nMyLine := nLine;
-Register2 := Register(DefectMngr ,inClassID,inErrorID);]]></ST>
-      </Implementation>
-    </Method>
     <Property Name="RisingEdge" Id="{3bbddc04-efc2-4c4d-a5c0-96dcc27b9ebe}">
-      <Declaration><![CDATA[PROPERTY PUBLIC RisingEdge : T_MaxString]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC RisingEdge : DATE_AND_TIME]]></Declaration>
       <Get Name="Get" Id="{82fdcf12-9f88-4cc4-9d52-d88475eda07c}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[RisingEdge := _RisingEdge;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Property Name="SendRegisterMsg" Id="{85b1138c-1583-4d32-9377-41c32d7e3328}">
-      <Declaration><![CDATA[PROPERTY PUBLIC SendRegisterMsg : BOOL]]></Declaration>
-      <Get Name="Get" Id="{d973e6bb-7bdd-451e-850c-2191c15990ae}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SendRegisterMsg := NOT bRegisteredSent AND _bRegistered;
-bRegisteredSent := TRUE;]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -377,34 +449,40 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF Activate AND State <> E_DefectState.Active AND State <> E_DefectState.ActiveAndAck THEN
-  _State		:= E_DefectState.Active;
-  _RisingEdge	:= _DefectMngr.sActTime;
-  _FallingEdge := '';
+  _State := E_DefectState.Active;
+  _RisingEdge	:= _DefectMngr._objActTime_R.GetDateTime;
+  _FallingEdge := DT#1970-1-1-0:0:0;//DATE_AND_TIME#1970-1-1-0:0:0
+  UpdateHideDefect();
 ELSIF NOT Activate THEN
 	IF State = E_DefectState.Off OR State = E_DefectState.OffAndNotAck THEN
-		bTelegramSent := FALSE;
+    //Alarm and Info messages can be sent again only if the Defect return to E_DefectState.Off
+    IF State = E_DefectState.Off THEN
+		  DefectSentToFalse();
+    END_IF
 	END_IF
   IF State = E_DefectState.Active THEN
-    _State			:= E_DefectState.OffAndNotAck;
-		_FallingEdge	:= _DefectMngr.sActTime;
+    _State := E_DefectState.OffAndNotAck;
+		_FallingEdge	:= _DefectMngr._objActTime_R.GetDateTime;//_DefectMngr.ActTime;
+    UpdateHideDefect();
   ELSIF State = E_DefectState.ActiveAndAck THEN
-    _State			:= E_DefectState.Off;
-		_FallingEdge	:= _DefectMngr.sActTime;
+    _State := E_DefectState.Off;
+		_FallingEdge := _DefectMngr._objActTime_R.GetDateTime;//_DefectMngr.ActTime;
+    UpdateHideDefect();
   ELSIF State = E_DefectState.None THEN
     _State := E_DefectState.Off;
+    UpdateHideDefect();
 	END_IF
-END_IF]]></ST>
+END_IF
+]]></ST>
       </Implementation>
     </Method>
-    <Method Name="SetOff" Id="{0f1d73b0-5d3e-4e93-8286-d3e8431543fe}">
-      <Declaration><![CDATA[METHOD PUBLIC SetOff : BOOL
+    <Method Name="SetOff" Id="{95b96f71-6c7a-43a0-8983-c196a0a878b1}">
+      <Declaration><![CDATA[METHOD PUBLIC SetOff
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[_State := E_DefectState.Off;
-//SetOff := TRUE;
-bTelegramSent := false;]]></ST>
+        <ST><![CDATA[Set(false);]]></ST>
       </Implementation>
     </Method>
     <Method Name="SetOn" Id="{c6277ba6-9f43-4e92-a278-b7168384b93c}">
@@ -438,16 +516,16 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
-    <Method Name="TelegramMsgConvert" Id="{35d74495-d9fb-4c25-bcc9-f60944056ab5}">
-      <Declaration><![CDATA[METHOD PRIVATE TelegramMsgConvert : BOOL
+    <Method Name="TelegramMsgFilter" Id="{35d74495-d9fb-4c25-bcc9-f60944056ab5}">
+      <Declaration><![CDATA[METHOD PRIVATE TelegramMsgFilter : BOOL
 VAR_INPUT
-	sDatabaseMsg	:	STRING(255);
+	sDatabaseMsg	:	T_MaxString;
 END_VAR
 VAR_OUTPUT
-	sTelegramMsg	:	STRING(255);
+	sTelegramMsg	:	T_MaxString;
 END_VAR
 VAR
-	sTelegramTmp	:	STRING(255);
+	sTelegramTmp	:	T_MaxString;
 	i:	INT;
 	iSafe:	INT;
 	iLengthStr:	INT	:= 0;
@@ -474,7 +552,7 @@ IF NOT F_StringIsASCII(pSTRING := ADR(sTelegramTmp), nLen => iNumAsciiChar) THEN
 	iLengthStr := LEN(sTelegramTmp);
 	
 //	IF C.sLangErrors = 'fr' THEN
-	IF  _DefectMngr.objErrorDB^.sMsgLang = 'fr' THEN
+	IF  _DefectMngr.ErrorDB.sMsgLang = 'fr' THEN
 			FOR i:=1 TO 28 BY 1 DO
 				iSafe := 0;
 				REPEAT
@@ -487,7 +565,7 @@ IF NOT F_StringIsASCII(pSTRING := ADR(sTelegramTmp), nLen => iNumAsciiChar) THEN
 				END_REPEAT;	
 			END_FOR
 //	ELSIF C.sLangErrors = 'de' THEN
-	ELSIF  _DefectMngr.objErrorDB^.sMsgLang = 'de' THEN
+	ELSIF  _DefectMngr.ErrorDB.sMsgLang = 'de' THEN
 		FOR i:=1 TO 7 BY 1 DO
 		iSafe := 0;
 			REPEAT
@@ -501,21 +579,15 @@ IF NOT F_StringIsASCII(pSTRING := ADR(sTelegramTmp), nLen => iNumAsciiChar) THEN
 		END_FOR
 	END_IF
 END_IF
-
 sTelegramMsg := sTelegramTmp;]]></ST>
       </Implementation>
     </Method>
-    <Property Name="TelegramMsgSend" Id="{a204988a-66ae-47e9-a056-f119d2f2e1ba}">
-      <Declaration><![CDATA[PROPERTY PUBLIC TelegramMsgSend : BOOL]]></Declaration>
-      <Get Name="Get" Id="{fcd35725-5151-4b31-99ff-e0af66c76ec1}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Method Name="UpdateHideDefect" Id="{ce503e5f-2ddd-4972-942e-a2fbaeb315e7}">
+      <Declaration><![CDATA[METHOD PRIVATE UpdateHideDefect
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[TelegramMsgSend := NOT bTelegramSent AND _bRegistered;
-bTelegramSent := TRUE;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
+      <Implementation>
+        <ST><![CDATA[bHideDefect := NOT (State = E_DefectState.Off) and NOT (State = E_DefectState.OffAndNotAck ) and not (State = E_DefectState.Active );]]></ST>
+      </Implementation>
+    </Method>
   </POU>
 </TcPlcObject>
