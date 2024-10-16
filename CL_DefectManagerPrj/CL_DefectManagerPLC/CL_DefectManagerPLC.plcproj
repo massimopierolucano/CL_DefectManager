@@ -16,10 +16,10 @@
     <Implicit_KindOfTask>{c38744b6-b614-4b27-8212-833c31a9329b}</Implicit_KindOfTask>
     <Implicit_Jitter_Distribution>{51a4d365-e3f9-4c9e-9284-8142424d1a1d}</Implicit_Jitter_Distribution>
     <LibraryReferences>{549e7324-26e3-44b6-b6f1-d3e724f0ec9c}</LibraryReferences>
-    <Company>CleanGreensSA</Company>
+    <Company>CleanGreens SA</Company>
     <Released>true</Released>
     <Title>CL_DefectManager</Title>
-    <ProjectVersion>2.0.1</ProjectVersion>
+    <ProjectVersion>2.0.2</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -83,6 +83,7 @@
     </PlaceholderReference>
     <PlaceholderReference Include="CGS_ObjectsLibrary">
       <DefaultResolution>CL_CleanGreensObjectsLibrary, * (CleanGreens SA)</DefaultResolution>
+      <Namespace>CL_CleanGreensObjectsLibrary</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Database">
       <DefaultResolution>Tc2_Database, * (Beckhoff Automation GmbH)</DefaultResolution>
