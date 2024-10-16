@@ -19,7 +19,7 @@
     <Company>CleanGreensSA</Company>
     <Released>true</Released>
     <Title>CL_DefectManager</Title>
-    <ProjectVersion>2.0</ProjectVersion>
+    <ProjectVersion>2.0.1</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -38,7 +38,7 @@
     <SelectedLibraryCategories>
       <Id xmlns="">{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
     </SelectedLibraryCategories>
-    <Placeholder>DefectManager</Placeholder>
+    <Placeholder>CGS_DefectManager</Placeholder>
     <Description>class to handle defects. Majour upgrade with several fixes and dynamic allocation</Description>
     <Author>Massimo Lucano</Author>
   </PropertyGroup>
