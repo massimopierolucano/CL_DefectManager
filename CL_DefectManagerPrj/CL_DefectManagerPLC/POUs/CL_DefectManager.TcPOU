@@ -20,6 +20,8 @@ VAR
 	_nMaxDefectsView        :	UINT;
 	_nMaxDefects            :	UINT;
   
+  _nNumIrrLinesForHMI     : UINT;
+  
   i1,x1,y1                : UINT;
   
   // Color for HMI
@@ -187,19 +189,21 @@ END_VAR
     <Method Name="Init" Id="{db1f869e-ec34-41a5-b14c-7767f959b8da}">
       <Declaration><![CDATA[METHOD PUBLIC Init : BOOL
 VAR_INPUT
-  stIrrLine       : ST_LineReference;
-  ErrorDB_R       : REFERENCE TO CL_ErrorDB;
-  ActTime_R       : REFERENCE TO CL_ActTimeDate;
-	nMaxDefects	    : UINT;
-	nMaxDefectsView	:	UINT;//number of line to show in the HMI, each line is a defect
+  stIrrLine           : ST_LineReference;
+  ErrorDB_R           : REFERENCE TO CL_ErrorDB;
+  ActTime_R           : REFERENCE TO CL_ActTimeDate;
+	nMaxDefects	        : UINT;
+	nMaxDefectsView	    :	UINT;//number of line to show in the HMI, each line is a defect
+  nNumIrrLinesForHMI  : UINT;//number of irrigation line handled by a single PLC and HMI
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bInit := Init := FALSE;
-IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= C.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= C.nMaxDefectsView_C THEN
+IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= C.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= C.nMaxDefectsView_C and nNumIrrLinesForHMI > 0 THEN
   MRLineRef := stIrrLine;
   _nMaxDefects	:=	nMaxDefects;
   _nMaxDefectsView	:=	nMaxDefectsView;
+  _nNumIrrLinesForHMI := nNumIrrLinesForHMI;
 
   _objErrorDB_R REF= ErrorDB_R;
   _objActTime_R REF= ActTime_R;
@@ -282,6 +286,17 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[nMaxDefectsView	:= _nMaxDefectsView;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="NumIrrLinesForHMI" Id="{b2a520d9-cbc1-4c89-8049-e39bd7386c00}">
+      <Declaration><![CDATA[PROPERTY PUBLIC NumIrrLinesForHMI : UINT]]></Declaration>
+      <Get Name="Get" Id="{31d7f777-4061-4715-ae9a-dd3fffc11074}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[NumIrrLinesForHMI := _nNumIrrLinesForHMI;]]></ST>
         </Implementation>
       </Get>
     </Property>

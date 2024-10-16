@@ -97,7 +97,7 @@ END_CASE
 
 IF bConsoleMsg AND (sTextOut_P<>0) THEN 
   // Shorter, because issue for too long strings 
-  IF C.uiNumIrrLinesForHMI_C <= 1 THEN
+  IF _DefectMngr.NumIrrLinesForHMI <= 1 THEN
     IF _DefectMngr.MRIrrLine = 0 THEN
       sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLineFixedID);
       sMsgAddLine := concat('Main cabinet ',sMsgAddLine);
@@ -120,8 +120,6 @@ IF bConsoleMsg AND (sTextOut_P<>0) THEN
   END_IF
   
   fbFormatStr(
-    //sFormat	:= '$N ClassID: %s  ErrID: %s  Status: %s  Severity: %s $N InstancePath: %s $N Message sender: Line %s - ', 
-    //sFormat	:= '$N Severity: %s  Status: %s  ClassID: %s  ErrID: %s $N InstancePath: %s $N Message sender: Line %s - ', 
     sFormat	:= '$N Severity: %s  Status: %s  ClassID: %s  ErrID: %s $N InstancePath: %s $N Message sender: %s', 
     arg1  := F_STRING(severityStr),
     arg2	:= F_STRING(stateStr),
@@ -174,7 +172,6 @@ IF sMsgOut_P <>0 THEN
 	bTmpErr := FALSE;
 	IF bShowIstance THEN 
 		fbFormatStr(
-      //sFormat	:= '%%0AClassID: %S  ErrID: %S  Status: %S  Severity: %S %%0AInstancePath: %S %%0A',//MyLine: %S  
       sFormat	:= '%%0ASeverity: %S  Status: %S  ClassID: %S  ErrID: %S %%0AInstancePath: %S %%0AMessage sender: %s',
       arg1  := F_STRING(severityStr),
       arg2	:= F_STRING(stateStr),
@@ -414,7 +411,6 @@ IF __ISVALIDREF(DefectMngr) THEN
 	
 	FOR i:= 1 TO _DefectMngr.nMaxDefects DO	
 		IF (i = _DefectMngr.nMaxDefects) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defects is already full => Error
-			G.IRS_R.FatalExecutionError := TRUE;
       _DefectMngr.ArrayIsFull := TRUE;
       ADSLOGSTR(ADSLOG_MSGTYPE_MSGBOX, 'Fatal error: too many defects: increase the array size and recompile','');
 		ELSIF _DefectMngr.List(i,0) = THIS THEN // Defect already in the list
