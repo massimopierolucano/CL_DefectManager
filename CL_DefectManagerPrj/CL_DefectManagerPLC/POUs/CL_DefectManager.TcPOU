@@ -58,13 +58,15 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Defect Critical -> Irrigation system state machine generates Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
-//Defect Error -> Irrigation system state machine generates Stop, message generated is visible inside the Alarms HMI, send to Telegram operator group
-//Defect Warning -> Irrigation system state machine generates no Stop or Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
-//IMPORTANT: warning defect can by promoted to Error after a while -> update ErrorDB
-//Defect Info -> Irrigation system state machine no Stop or Abort at all, only a message is generated visible inside the Infos HMI, send to Telegram operator group
-//Defect Verbose -> Irrigation system state machine So stop or Abort at all, only a message is generated visible to the Administrator Infos HMI, send to Telegram Debug group
-//TcEventSeverity : (Verbose:=0, Info:=1, Warning:=2, Error:=3, Critical:=4);
+      <ST><![CDATA[(*
+Defect Critical -> Irrigation system state machine generates Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
+Defect Error -> Irrigation system state machine generates Stop, message generated is visible inside the Alarms HMI, send to Telegram operator group
+Defect Warning -> Irrigation system state machine generates no Stop or Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
+IMPORTANT: warning defect can by promoted to Error after a while -> update ErrorDB
+Defect Info -> Irrigation system state machine no Stop or Abort at all, only a message is generated visible inside the Infos HMI, send to Telegram operator group
+Defect Verbose -> Irrigation system state machine So stop or Abort at all, only a message is generated visible to the Administrator Infos HMI, send to Telegram Debug group
+TcEventSeverity : (Verbose:=0, Info:=1, Warning:=2, Error:=3, Critical:=4);
+*)
 IF bInit THEN
   THIS^.Run();
 END_IF]]></ST>
@@ -333,6 +335,15 @@ Release := AllDefects_ARP = 0 AND CurrentAllDefects_ARP = 0;]]></ST>
     </Method>
     <Method Name="Run" Id="{946b1174-bb8e-46cf-af4c-0febbf0162a1}">
       <Declaration><![CDATA[METHOD PRIVATE Run
+(*
+Defect Critical -> Irrigation system state machine generates Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
+Defect Error -> Irrigation system state machine generates Stop, message generated is visible inside the Alarms HMI, send to Telegram operator group
+Defect Warning -> Irrigation system state machine generates no Stop or Abort, message generated is visible inside the Alarms HMI, send to Telegram operator group
+IMPORTANT: warning defect can by promoted to Error after a while -> update ErrorDB
+Defect Info -> Irrigation system state machine no Stop or Abort at all, only a message is generated visible inside the Infos HMI, send to Telegram operator group
+Defect Verbose -> Irrigation system state machine So stop or Abort at all, only a message is generated visible to the Administrator Infos HMI, send to Telegram Debug group
+TcEventSeverity : (Verbose:=0, Info:=1, Warning:=2, Error:=3, Critical:=4);
+*)
 
 ]]></Declaration>
       <Implementation>
@@ -467,7 +478,9 @@ IF  pDefect^.Severity <= TcEventSeverity.Info THEN
       pDefect^.Ack();
     END_IF
   ELSE
-    pDefect^.DefectSentToFalse();
+    if pDefect^.State <> E_DefectState.Active and pDefect^.State <> E_DefectState.OffAndNotAck then
+      pDefect^.DefectSentToFalse();
+    end_if
   END_IF
 END_IF]]></ST>
       </Implementation>

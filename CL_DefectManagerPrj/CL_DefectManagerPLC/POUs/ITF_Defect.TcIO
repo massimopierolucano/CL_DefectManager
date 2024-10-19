@@ -11,14 +11,9 @@
       <Declaration><![CDATA[METHOD PUBLIC BuildStringMsg : BOOL
 //return false if no error 
 VAR_INPUT
-	sMsgOut_P               : POINTER TO T_StringBuffer;//return the Telegram message
-  sTextOut_P              : POINTER TO T_StringBuffer;//return the ADS console message  
-	bConsoleMsg             : BOOL := FALSE;
-  
-	bShowIstance            : BOOL := FALSE;
-  bShowLongClass          : BOOL := FALSE;
-  bShowLongError          : BOOL := FALSE;
-  bShowRemedMsg           : BOOL := FALSE;
+	sMsgOut_P   : POINTER TO T_StringBuffer;//return the Telegram message
+  sTextOut_P  : POINTER TO T_StringBuffer;//return the ADS console message  
+  stShow      : ST_ShowMsgFields;
 END_VAR]]></Declaration>
     </Method>
     <Property Name="CanSendAlarmMsg" Id="{b74b50b0-24ef-43f2-a79b-586bccdc223d}">
@@ -75,7 +70,7 @@ END_VAR
     <Method Name="Set" Id="{7882b9e3-a8fb-4fa0-b5bd-b6658a4f19c5}">
       <Declaration><![CDATA[METHOD Set
 VAR_INPUT
-  Activate : BOOL;
+  bSetActivate : BOOL;
 END_VAR
 ]]></Declaration>
     </Method>

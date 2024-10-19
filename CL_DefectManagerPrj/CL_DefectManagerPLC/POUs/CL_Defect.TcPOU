@@ -52,27 +52,22 @@ END_IF]]></ST>
       <Declaration><![CDATA[METHOD PUBLIC BuildStringMsg : BOOL
 //return false if no error 
 VAR_INPUT
-	sMsgOut_P               : POINTER TO T_StringBuffer;//return the Telegram message
-  sTextOut_P              : POINTER TO T_StringBuffer;//return the ADS console message  
-	bConsoleMsg             : BOOL := FALSE;
-  
-	bShowIstance            : BOOL := FALSE;
-  bShowLongClass          : BOOL := FALSE;
-  bShowLongError          : BOOL := FALSE;
-  bShowRemedMsg           : BOOL := FALSE;
+	sMsgOut_P       : POINTER TO T_StringBuffer;//return the Telegram message
+  sTextOut_P      : POINTER TO T_StringBuffer;//return the ADS console message  
+  stShow          : ST_ShowMsgFields;
 END_VAR
 VAR
-	bTmpErr			            : BOOL;
-	bTmp1Err		            : BOOL;
-  nErrIdOut               : UDINT;
-	fbFormatStr	            : FB_FormatString;
+	bTmpErr			    : BOOL;
+	bTmp1Err		    : BOOL;
+  nErrIdOut       : UDINT;
+	fbFormatStr	    : FB_FormatString;
   
-	severityStr	            : T_MaxString;
-	stateStr                : T_MaxString;
-	sMsgAddLine	                :	T_MaxString;
-  sMsgTmp                 : T_MaxString;
-  sClassID                : T_MaxString;
-  sErrorID                : T_MaxString;
+	severityStr	    : T_MaxString;
+	stateStr        : T_MaxString;
+	sMsgAddLine	    :	T_MaxString;
+  sMsgTmp         : T_MaxString;
+  sClassID        : T_MaxString;
+  sErrorID        : T_MaxString;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[BuildStringMsg := FALSE;
@@ -95,7 +90,7 @@ CASE _Severity OF
 		TcEventSeverity.Warning : severityStr := 'Warning';
 END_CASE
 
-IF bConsoleMsg AND (sTextOut_P<>0) THEN 
+IF stShow.bTxtLog AND (sTextOut_P<>0) THEN 
   // Shorter, because issue for too long strings 
   IF _DefectMngr.NumIrrLinesForHMI <= 1 THEN
     IF _DefectMngr.MRIrrLine = 0 THEN
@@ -170,7 +165,7 @@ END_IF
 //build the sMsgOut_P string buffers used to sent Telegram message
 IF sMsgOut_P <>0 THEN
 	bTmpErr := FALSE;
-	IF bShowIstance THEN 
+	IF stShow.bIstance THEN 
 		fbFormatStr(
       sFormat	:= '%%0ASeverity: %S  Status: %S  ClassID: %S  ErrID: %S %%0AInstancePath: %S %%0AMessage sender: %s',
       arg1  := F_STRING(severityStr),
@@ -196,7 +191,7 @@ IF sMsgOut_P <>0 THEN
 	END_IF
   
   //build class description
-  IF bShowLongClass THEN
+  IF stShow.bLongClass THEN
     TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetClassLongMsg(_ClassIndex), sTelegramMsg => sMsgTmp);
   ELSE
     TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetClassShortMsg(_ClassIndex), sTelegramMsg => sMsgTmp);
@@ -211,7 +206,7 @@ IF sMsgOut_P <>0 THEN
     sMsgTmp := 'Message description:%0A';	
     bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
   END_IF
-  IF bShowLongError THEN
+  IF stShow.bLongError THEN
     TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorLongMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
   ELSE
     TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorShortMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
@@ -221,11 +216,11 @@ IF sMsgOut_P <>0 THEN
   END_IF	
 
   //build remed description
-  IF NOT bTmpErr AND bShowRemedMsg THEN
+  IF NOT bTmpErr AND stShow.bRemed THEN
     sMsgAddLine := '%0A Correction:%0A';
     bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgAddLine),sMsgOut_P,SIZEOF(T_StringBuffer));
   END_IF   
-  IF NOT bTmpErr AND bShowRemedMsg THEN
+  IF NOT bTmpErr AND stShow.bRemed THEN
     TelegramMsgFilter(sDatabaseMsg := _DefectMngr.ErrorDB.GetErrorRemedMsg(_ErrorIndex), sTelegramMsg => sMsgTmp);
     bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
   END_IF
@@ -242,7 +237,9 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[CanSendAlarmMsg := NOT bTelAlarmSent AND _bRegistered;
-bTelAlarmSent := TRUE;]]></ST>
+if CanSendAlarmMsg then
+  bTelAlarmSent := TRUE;
+end_if]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -254,7 +251,9 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[CanSendInfoMsg := NOT bTelInfoSent AND _bRegistered;
-bTelInfoSent := TRUE;]]></ST>
+if CanSendInfoMsg then
+  bTelInfoSent := TRUE;
+end_if]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -266,7 +265,9 @@ END_VAR
 ]]></Declaration>
         <Implementation>
           <ST><![CDATA[CanSendRegisterMsg := NOT bTelRegisteredSent AND _bRegistered;//bTelRegisteredSent = false only at Init time
-bTelRegisteredSent := TRUE;]]></ST>
+if CanSendRegisterMsg then
+  bTelRegisteredSent := TRUE;
+end_if]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -440,16 +441,16 @@ END_VAR
     <Method Name="Set" Id="{317e56ad-4388-4346-bef8-22c94aa78b51}">
       <Declaration><![CDATA[METHOD Set
 VAR_INPUT
-  Activate : BOOL;
+  bSetActivate : BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF Activate AND State <> E_DefectState.Active AND State <> E_DefectState.ActiveAndAck THEN
+        <ST><![CDATA[IF bSetActivate AND State <> E_DefectState.Active AND State <> E_DefectState.ActiveAndAck THEN
   _State := E_DefectState.Active;
   _RisingEdge	:= _DefectMngr._objActTime_R.GetDateTime;
   _FallingEdge := DT#1970-1-1-0:0:0;//DATE_AND_TIME#1970-1-1-0:0:0
   UpdateHideDefect();
-ELSIF NOT Activate THEN
+ELSIF NOT bSetActivate THEN
 	IF State = E_DefectState.Off OR State = E_DefectState.OffAndNotAck THEN
     //Alarm and Info messages can be sent again only if the Defect return to E_DefectState.Off
     IF State = E_DefectState.Off THEN
@@ -541,12 +542,10 @@ VAR CONSTANT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[sTelegramTmp := sDatabaseMsg;
-
+        <ST><![CDATA[
+sTelegramTmp := sDatabaseMsg;
 IF NOT F_StringIsASCII(pSTRING := ADR(sTelegramTmp), nLen => iNumAsciiChar) THEN
-	
 	iLengthStr := LEN(sTelegramTmp);
-	
 //	IF C.sLangErrors = 'fr' THEN
 	IF  _DefectMngr.ErrorDB.sMsgLang = 'fr' THEN
 			FOR i:=1 TO 28 BY 1 DO
@@ -575,7 +574,10 @@ IF NOT F_StringIsASCII(pSTRING := ADR(sTelegramTmp), nLen => iNumAsciiChar) THEN
 		END_FOR
 	END_IF
 END_IF
-sTelegramMsg := sTelegramTmp;]]></ST>
+sTelegramMsg := sTelegramTmp;
+
+//only to reproduce the bug without filtering
+//sTelegramMsg := sDatabaseMsg;]]></ST>
       </Implementation>
     </Method>
     <Method Name="UpdateHideDefect" Id="{ce503e5f-2ddd-4972-942e-a2fbaeb315e7}">
