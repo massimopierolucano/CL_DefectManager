@@ -19,7 +19,7 @@
     <Company>CleanGreens SA</Company>
     <Released>true</Released>
     <Title>CL_DefectManager</Title>
-    <ProjectVersion>2.1</ProjectVersion>
+    <ProjectVersion>2.1.1</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -79,6 +79,7 @@
   <ItemGroup>
     <PlaceholderReference Include="CGS_ErrorsDatabase">
       <DefaultResolution>CL_ErrorsDatabase, * (CleanGreens SA)</DefaultResolution>
+      <Namespace>CL_ErrorsDatabase</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="CGS_ObjectsLibrary">
       <DefaultResolution>CL_CleanGreensObjectsLibrary, * (CleanGreens SA)</DefaultResolution>
