@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
   <POU Name="CL_Defect" Id="{15178125-5b87-4ebe-aa9b-003631375054}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK CL_Defect IMPLEMENTS ITF_Defect
@@ -93,22 +93,22 @@ END_CASE
 IF stShow.bTxtLog AND (sTextOut_P<>0) THEN 
   // Shorter, because issue for too long strings 
   IF _DefectMngr.NumIrrLinesForHMI <= 1 THEN
-    IF _DefectMngr.MRIrrLine = 0 THEN
-      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLineFixedID);
+    IF _DefectMngr.MRCIrrLine = 0 THEN
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRCIrrLineFixedID);
       sMsgAddLine := concat('Main cabinet ',sMsgAddLine);
       sMsgAddLine := concat(sMsgAddLine,' - ');
     ELSE
-      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLineFixedID);
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRCIrrLineFixedID);
       sMsgAddLine := concat('Line ',sMsgAddLine);
       sMsgAddLine := concat(sMsgAddLine,' - ');    
 		END_IF
   ELSE
-    IF _DefectMngr.MRIrrLine = 0 THEN
+    IF _DefectMngr.MRCIrrLine = 0 THEN
       sMsgAddLine := 'for all lines';
       sMsgAddLine := concat('Main cabinet ',sMsgAddLine);
       sMsgAddLine := concat(sMsgAddLine,' - ');
     ELSE
-      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRIrrLine);
+      sMsgAddLine := UINT_TO_STRING(_DefectMngr.MRCIrrLine);
       sMsgAddLine := concat('Line ',sMsgAddLine);
       sMsgAddLine := concat(sMsgAddLine,' - ');
  	  END_IF

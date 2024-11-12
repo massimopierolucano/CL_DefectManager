@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
   <POU Name="CL_DefectManager" Id="{8a374f4e-a356-442b-8efe-30c02ba84041}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
 FUNCTION_BLOCK PUBLIC CL_DefectManager EXTENDS CL_MasterRootClass
@@ -202,7 +202,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[bInit := Init := FALSE;
 IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= C.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= C.nMaxDefectsView_C and nNumIrrLinesForHMI > 0 THEN
-  MRLineRef := stIrrLine;
+  MRCLineRef := stIrrLine;
   _nMaxDefects	:=	nMaxDefects;
   _nMaxDefectsView	:=	nMaxDefectsView;
   _nNumIrrLinesForHMI := nNumIrrLinesForHMI;
