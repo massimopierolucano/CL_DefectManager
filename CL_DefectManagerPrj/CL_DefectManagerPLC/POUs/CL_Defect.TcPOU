@@ -24,13 +24,14 @@ VAR
   
   bHideDefect	        : BOOL := true;
 	
-	_RisingEdge         : DATE_AND_TIME;//STRING(32);
-	_FallingEdge		    : DATE_AND_TIME;//STRING(32);
+	_RisingEdge         : DATE_AND_TIME;
+	_FallingEdge		    : DATE_AND_TIME;
 	
 	{attribute 'instance-path'}
 	{attribute 'no_init'}
 	_InstancePath       : T_InstancePath;
 	InstanceStr_P		    : POINTER TO T_StringBuffer;
+  _sAddMsg		        : string(64) := '';
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -151,6 +152,18 @@ IF stShow.bTxtLog AND (sTextOut_P<>0) THEN
     sMsgTmp := _DefectMngr.ErrorDB.GetErrorShortMsg(_ErrorIndex);     
     bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
   END_IF	
+  
+  //add AddMsg string to the alarm message
+  IF _sAddMsg <> '' THEN
+    IF NOT bTmp1Err THEN
+      sMsgTmp := '$N';	
+      bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(sMsgTmp),sTextOut_P,SIZEOF(T_StringBuffer));
+    END_IF
+    IF NOT bTmp1Err THEN
+      bTmp1Err := NOT CONCAT2(sTextOut_P,ADR(_sAddMsg),sTextOut_P,SIZEOF(T_StringBuffer));
+    END_IF	
+	END_IF
+  
   //concat twice new line
   IF NOT bTmp1Err THEN
     sMsgTmp := ' $N $N';	
@@ -214,6 +227,16 @@ IF sMsgOut_P <>0 THEN
   IF NOT bTmpErr THEN
     bTmpErr := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
   END_IF	
+  
+  IF _sAddMsg <> '' THEN
+    IF NOT bTmp1Err THEN
+      sMsgTmp := '%0A';	
+      bTmp1Err := NOT CONCAT2(sMsgOut_P,ADR(sMsgTmp),sMsgOut_P,SIZEOF(T_StringBuffer));
+    END_IF
+    IF NOT bTmp1Err THEN
+      bTmp1Err := NOT CONCAT2(sMsgOut_P,ADR(_sAddMsg),sMsgOut_P,SIZEOF(T_StringBuffer));
+    END_IF	
+	END_IF
 
   //build remed description
   IF NOT bTmpErr AND stShow.bRemed THEN
@@ -439,7 +462,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="Set" Id="{317e56ad-4388-4346-bef8-22c94aa78b51}">
-      <Declaration><![CDATA[METHOD Set
+      <Declaration><![CDATA[METHOD PUBLIC Set
 VAR_INPUT
   bSetActivate : BOOL;
 END_VAR
@@ -489,6 +512,28 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[Set(TRUE);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetOnWithMsg" Id="{22f6fe61-f751-4c20-a1f3-2a3e8c544fac}">
+      <Declaration><![CDATA[METHOD PUBLIC SetOnWithMsg
+VAR_INPUT
+    sAddMsg_P     : POINTER TO T_MaxString;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_sAddMsg := sAddMsg_P^;
+Set(TRUE);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetWithMsg" Id="{f61029a3-eb19-4eb2-9148-638d384c2f43}">
+      <Declaration><![CDATA[METHOD PUBLIC SetWithMsg
+VAR_INPUT
+  bSetActivate  : BOOL;
+  sAddMsg_P     : POINTER TO T_MaxString;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_sAddMsg := sAddMsg_P^;
+Set(bSetActivate);]]></ST>
       </Implementation>
     </Method>
     <Property Name="Severity" Id="{596ff0dc-1f9f-42e3-a88b-dd768e4c4b2b}">

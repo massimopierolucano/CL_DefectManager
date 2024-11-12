@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
   <Itf Name="ITF_Defect" Id="{89b16cf0-c09f-47d5-98b3-546ad3355eb4}">
     <Declaration><![CDATA[INTERFACE ITF_Defect EXTENDS __SYSTEM.IQueryInterface
  ]]></Declaration>
@@ -68,7 +68,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="Set" Id="{7882b9e3-a8fb-4fa0-b5bd-b6658a4f19c5}">
-      <Declaration><![CDATA[METHOD Set
+      <Declaration><![CDATA[METHOD PUBLIC Set
 VAR_INPUT
   bSetActivate : BOOL;
 END_VAR
@@ -77,6 +77,21 @@ END_VAR
     <Method Name="SetOn" Id="{712c1a87-cee9-46ee-ade0-211337a0720c}">
       <Declaration><![CDATA[METHOD PUBLIC SetOn
 VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="SetOnWithMsg" Id="{7950e95b-d7e6-4b62-a4a2-e357bad7a91a}">
+      <Declaration><![CDATA[METHOD PUBLIC SetOnWithMsg
+VAR_INPUT
+  sAddMsg_P     : POINTER TO T_MaxString;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="SetWithMsg" Id="{f9492948-833d-4efa-9e40-78fa234dde35}">
+      <Declaration><![CDATA[METHOD PUBLIC SetWithMsg
+VAR_INPUT
+  bSetActivate  : BOOL;
+  sAddMsg_P     : POINTER TO T_MaxString;
 END_VAR
 ]]></Declaration>
     </Method>
