@@ -19,7 +19,7 @@
     <Company>CleanGreens SA</Company>
     <Released>true</Released>
     <Title>CL_DefectManager</Title>
-    <ProjectVersion>2.2.1</ProjectVersion>
+    <ProjectVersion>2.3.2</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -55,7 +55,7 @@
     <Compile Include="DUTs\T_InstancePath.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GVLs\C.TcGVL">
+    <Compile Include="GVLs\CDefect.TcGVL">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PlcTask.TcTTO">

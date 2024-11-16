@@ -22,6 +22,12 @@ END_VAR]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
+    <Property Name="CanSendInfoMsg" Id="{6275fe25-5fc7-48ef-991a-fa4f174e8fe6}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CanSendInfoMsg : BOOL]]></Declaration>
+      <Get Name="Get" Id="{b6cfd787-ed3f-4eff-b99d-ee3aad0cac40}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
     <Property Name="CanSendRegisterMsg" Id="{f46677d4-0f1e-4379-b48f-f4f8136faa61}">
       <Declaration><![CDATA[PROPERTY PUBLIC CanSendRegisterMsg : BOOL]]></Declaration>
       <Get Name="Get" Id="{e2d9cdba-52b6-4b87-9745-0642f2d63740}">
@@ -34,6 +40,18 @@ END_VAR]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
+    <Method Name="DefectSentToFalse" Id="{9d69e867-ea77-4226-af7a-daba244c945f}">
+      <Declaration><![CDATA[METHOD PUBLIC DefectSentToFalse
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="Description" Id="{56a096f7-c565-4f3e-9c21-3c39913f5436}">
+      <Declaration><![CDATA[PROPERTY PUBLIC Description : String]]></Declaration>
+      <Get Name="Get" Id="{8be84195-ac98-48b1-be7c-02d97dd77a82}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
     <Property Name="ErrorID" Id="{2055ee96-4912-436f-bbe8-31ccec2804e4}">
       <Declaration><![CDATA[PROPERTY ErrorID : STRING(3)]]></Declaration>
       <Get Name="Get" Id="{8b9e9dd6-9f33-4ed8-b309-732df45cd58c}">
@@ -43,6 +61,12 @@ END_VAR]]></Declaration>
     <Property Name="FallingEdge" Id="{86f0caa9-846e-4ade-aa41-e10b149927f4}">
       <Declaration><![CDATA[PROPERTY FallingEdge : DATE_AND_TIME]]></Declaration>
       <Get Name="Get" Id="{fab1dcdc-5d8c-40fe-b596-866f5b2753ce}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="HideDefect" Id="{cfdb3165-799d-47d6-b207-08c929f7aa3e}">
+      <Declaration><![CDATA[PROPERTY PUBLIC HideDefect : bool]]></Declaration>
+      <Get Name="Get" Id="{ddf4967c-2e67-48c9-9ddb-3c85da3b58dd}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
@@ -71,6 +95,12 @@ END_VAR
       <Declaration><![CDATA[METHOD PUBLIC Set
 VAR_INPUT
   bSetActivate : BOOL;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="SetOff" Id="{d559112c-161a-4548-98f8-342629567a43}">
+      <Declaration><![CDATA[METHOD PUBLIC SetOff
+VAR_INPUT
 END_VAR
 ]]></Declaration>
     </Method>
@@ -107,5 +137,9 @@ END_VAR
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
+    <Method Name="UpdateHideDefect" Id="{08600493-0851-47b4-a758-08baca01c8b4}">
+      <Declaration><![CDATA[METHOD UpdateHideDefect
+]]></Declaration>
+    </Method>
   </Itf>
 </TcPlcObject>

@@ -34,11 +34,11 @@ VAR
   // Filter minimum level shown
 	eMinSeverityShow        : TcEventSeverity  := TcEventSeverity.Info; 
 	
-  AllDefects_ARP          : POINTER TO ARRAY[1..C.nMaxDefects_C] OF POINTER TO CL_Defect; //used by CL_defect
-  CurrentAllDefects_ARP   : POINTER TO ARRAY[1..C.nMaxDefectsView_C] OF ST_DefectTable; // AllDefects_ARP^ of Defects activated
+  AllDefects_ARP          : POINTER TO ARRAY[1..CDefect.nMaxDefects_C] OF POINTER TO CL_Defect; //used by CL_defect
+  CurrentAllDefects_ARP   : POINTER TO ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; // AllDefects_ARP^ of Defects activated
     
-  CurrentDefects_AR       : ARRAY[1..C.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Defects shown
-  CurrentDefectsInfo_AR   : ARRAY[1..C.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Info Verbose Defects shown
+  CurrentDefects_AR       : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Defects shown
+  CurrentDefectsInfo_AR   : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Info Verbose Defects shown
   
   Ack_Defects             : BOOL := FALSE;
   Ack_InfoVerboseDefects  : BOOL := FALSE;
@@ -134,6 +134,66 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
+    <Property Name="AreCriticalDefects" Id="{1007f4d2-bf28-4616-ba26-13a92f3f8e2e}">
+      <Declaration><![CDATA[PROPERTY AreCriticalDefects : bool]]></Declaration>
+      <Get Name="Get" Id="{e5d98594-a2e1-4b9f-b748-e41894cbaea5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AreCriticalDefects := _CriticalIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{87d65378-8c40-4eaa-ba32-8737fe5b8e3f}">
+        <Declaration><![CDATA[PUBLIC 
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_CriticalIsPresent := AreCriticalDefects;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="AreErrorDefects" Id="{b1963fe5-df9f-42d4-b939-1f2b892c24a1}">
+      <Declaration><![CDATA[PROPERTY AreErrorDefects : bool]]></Declaration>
+      <Get Name="Get" Id="{c10aa3d6-f726-493e-a457-44c834496c87}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AreErrorDefects := _ErrorIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{af5a0fb1-0d70-4ec4-ad9b-5a440b31be11}">
+        <Declaration><![CDATA[PUBLIC 
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_ErrorIsPresent := AreErrorDefects;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="AreWarningDefecsts" Id="{48e285b1-c19f-4318-bacc-6849b28f4f73}">
+      <Declaration><![CDATA[PROPERTY AreWarningDefecsts : bool]]></Declaration>
+      <Get Name="Get" Id="{f02eac71-fdec-4b68-b7ca-43eda3ae7209}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AreWarningDefecsts := _WarningIsPresent;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{15792e06-6030-4064-b471-d2b58b30efc9}">
+        <Declaration><![CDATA[PUBLIC 
+VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_WarningIsPresent := AreWarningDefecsts;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="ArrayIsFull" Id="{60be3136-2b7a-4dcb-8372-feb0d96ee9d2}">
       <Declaration><![CDATA[PROPERTY PUBLIC ArrayIsFull : BOOL]]></Declaration>
       <Get Name="Get" Id="{9c782017-7664-475d-870d-9c1b2e659665}">
@@ -154,17 +214,6 @@ END_VAR
         </Implementation>
       </Set>
     </Property>
-    <Property Name="CriticalIsPresent" Id="{1007f4d2-bf28-4616-ba26-13a92f3f8e2e}">
-      <Declaration><![CDATA[PROPERTY CriticalIsPresent : bool]]></Declaration>
-      <Get Name="Get" Id="{e5d98594-a2e1-4b9f-b748-e41894cbaea5}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CriticalIsPresent := _CriticalIsPresent;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <Property Name="ErrorDB" Id="{52ff720b-9d37-4c18-a68a-d67caa1273a5}">
       <Declaration><![CDATA[PROPERTY PUBLIC ErrorDB : reference TO CL_ErrorDB]]></Declaration>
       <Get Name="Get" Id="{fca39d6d-b539-4140-ac1f-8844f4724ea0}">
@@ -174,17 +223,6 @@ END_VAR
         <Implementation>
           <ST><![CDATA[//objErrorDB := ADR(_objErrorDB);
 ErrorDB REF= _objErrorDB_R;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Property Name="ErrorIsPresent" Id="{b1963fe5-df9f-42d4-b939-1f2b892c24a1}">
-      <Declaration><![CDATA[PROPERTY ErrorIsPresent : bool]]></Declaration>
-      <Get Name="Get" Id="{c10aa3d6-f726-493e-a457-44c834496c87}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[ErrorIsPresent := _ErrorIsPresent;]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -201,7 +239,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bInit := Init := FALSE;
-IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= C.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= C.nMaxDefectsView_C and nNumIrrLinesForHMI > 0 THEN
+IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= CDefect.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= CDefect.nMaxDefectsView_C and nNumIrrLinesForHMI > 0 THEN
   MRCLineRef := stIrrLine;
   _nMaxDefects	:=	nMaxDefects;
   _nMaxDefectsView	:=	nMaxDefectsView;
@@ -223,35 +261,8 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IsASevereDefectSet" Id="{89ad5e55-4230-4edc-81ed-424a309879c0}">
-      <Declaration><![CDATA[METHOD PUBLIC IsASevereDefectSet : BOOL
-VAR
-	i			: UINT;	
-	pDef	: POINTER TO CL_Defect;
-	iDef	: ITF_Defect;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// this funtion return true if AT LEAST one defect critical or warning or error is set
-IsASevereDefectSet := false;
-FOR i:= 1 TO _nMaxDefects DO
-	IF AllDefects_ARP^[i] <> 0 THEN // Check if one defect is registred at this index
-		iDef := AllDefects_ARP^[i]^;
-		// Ctrl if address has the good interface (ITF_Default)
-		IF __QUERYPOINTER(iDef, pDef) THEN 
-			IF pDef^.State = E_DefectState.Active OR pDef^.State = E_DefectState.OffAndNotAck OR pDef^.State = E_DefectState.ActiveAndAck THEN
-				IF pDef^.Severity = TcEventSeverity.Critical OR pDef^.Severity = TcEventSeverity.Error OR pDef^.Severity = TcEventSeverity.Warning THEN
-					IsASevereDefectSet := TRUE;
-					EXIT;
-				END_IF
-			END_IF
-		END_IF
-	END_IF
-END_FOR]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="List" Id="{348bdb8b-aa35-4d6b-8e41-0d869fbd9981}">
-      <Declaration><![CDATA[METHOD PUBLIC List : POINTER TO CL_Defect
+    <Method Name="ListAll" Id="{348bdb8b-aa35-4d6b-8e41-0d869fbd9981}">
+      <Declaration><![CDATA[METHOD PUBLIC ListAll : POINTER TO CL_Defect
 VAR_INPUT
 	ind     : UINT;
 	defect  : POINTER TO CL_Defect;
@@ -260,11 +271,30 @@ END_VAR]]></Declaration>
         <ST><![CDATA[IF (ind > 0) AND (ind <= _nMaxDefects) AND AllDefects_ARP <> 0 THEN 
 	IF defect <> 0 THEN 
 		AllDefects_ARP^[ind] := defect;
-		List := defect;
+		ListAll := defect;
 	ELSE
-		List := AllDefects_ARP^[ind];
+		ListAll := AllDefects_ARP^[ind];
 		defect := AllDefects_ARP^[ind];
 	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ListCurrent" Id="{903417bc-a256-46cd-bcc7-02d67c340ed9}">
+      <Declaration><![CDATA[METHOD PUBLIC ListCurrent : POINTER TO CL_Defect
+VAR_INPUT
+	ind     : UINT;
+END_VAR
+VAR
+  pDf : pointer to CL_Defect;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ListCurrent := 0;
+IF (ind > 0) AND (ind <= _nMaxDefectsView) THEN 
+  IF Len2(ADR(CurrentAllDefects_ARP^[ind].InstancePath)) > 0 THEN
+    pDf := CurrentAllDefects_ARP^[ind].pDefect;
+	  ListCurrent := CurrentAllDefects_ARP^[ind].pDefect;
+  END_IF
 END_IF
 ]]></ST>
       </Implementation>
@@ -343,6 +373,8 @@ IMPORTANT: warning defect can by promoted to Error after a while -> update Error
 Defect Info -> Irrigation system state machine no Stop or Abort at all, only a message is generated visible inside the Infos HMI, send to Telegram operator group
 Defect Verbose -> Irrigation system state machine So stop or Abort at all, only a message is generated visible to the Administrator Infos HMI, send to Telegram Debug group
 TcEventSeverity : (Verbose:=0, Info:=1, Warning:=2, Error:=3, Critical:=4);
+Critical, Error, Warning are found if state is: E_DefectState.Active OR E_DefectState.ActiveAndAck OR E_DefectState.OffAndNotAck
+//MPL 16-11-2024 added condition "OR State = E_DefectState.OffAndNotAck" -> the error or critical or warning is found even if Off but not Ack 
 *)
 
 ]]></Declaration>
@@ -361,14 +393,16 @@ FOR i1:= 1 TO _nMaxDefects DO // C.nNbrMaxDefects_C DO
       IF pDefect^.State = E_DefectState.Off OR pDefect^.State = E_DefectState.None THEN
         Run_RemoveAllDefectsOffOrNone();
       ELSIF pDefect^.State = E_DefectState.Active OR pDefect^.State = E_DefectState.ActiveAndAck OR pDefect^.State = E_DefectState.OffAndNotAck THEN
+        //MPL 16-11-2024 added condition OR pDefect^.State = E_DefectState.OffAndNotAck -> the error or critical or warning is found even if Off but not Ack
         Run_AddAllDefectsPresent();
         Run_AutoOffInfoVerbose();
-      END_IF
-      
-      IF pDefect^.State = E_DefectState.Active OR pDefect^.State = E_DefectState.ActiveAndAck THEN
-        //find all Active defects 
         Run_FindAllCriticalErrorWarning();
       END_IF
+      
+      (*IF pDefect^.State = E_DefectState.Active OR pDefect^.State = E_DefectState.ActiveAndAck OR pDefect^.State = E_DefectState.OffAndNotAck THEN
+        //find all Active defects 
+        Run_FindAllCriticalErrorWarning();
+      END_IF*)
       
     END_IF//IF __QUERYPOINTER(iDefect, pDefect)
 	END_IF//IF AllDefects_ARP^[i1] <> 0
@@ -421,6 +455,7 @@ END_FOR
 lTemp := FALSE;
 FOR y1:= 1 TO _nMaxDefectsView DO
   IF CurrentAllDefects_ARP^[y1].InstancePath = pDefect^.InstancePath THEN
+    //CurrentAllDefects_ARP^[y1].pDefect := pDefect;
     CurrentAllDefects_ARP^[y1].State := pDefect^.State;
     SetEdgeStr(pDefect^.RisingEdge, CurrentAllDefects_ARP^[y1].RisingEdge);
     SetEdgeStr(pDefect^.FallingEdge, CurrentAllDefects_ARP^[y1].FallingEdge);
@@ -432,6 +467,7 @@ END_FOR
 IF NOT lTemp THEN
   FOR y1:= 1 TO _nMaxDefectsView DO
     IF CurrentAllDefects_ARP^[y1].InstancePath = '' THEN
+      CurrentAllDefects_ARP^[y1].pDefect := pDefect;
       CurrentAllDefects_ARP^[y1].InstancePath     := pDefect^.InstancePath;
       CurrentAllDefects_ARP^[y1].bHideDefect      := pDefect^.HideDefect;
       CurrentAllDefects_ARP^[y1].State            := pDefect^.State;
@@ -467,12 +503,12 @@ IF  pDefect^.Severity <= TcEventSeverity.Info THEN
   //dt1 := ActTime.GetDateTime;
   //dt2 := pDefect^.RisingEdge;
   lifeTime := ActTime.GetDateTime - pDefect^.RisingEdge;
-  IF lifeTime >= C.tInfoOffAndNotAckTimeout_C AND pDefect^.State <> E_DefectState.OffAndNotAck THEN //execute only once  C.tInfoOffAndNotAckTimeout_C := T#30S;
+  IF lifeTime >= CDefect.tInfoOffAndNotAckTimeout_C AND pDefect^.State <> E_DefectState.OffAndNotAck THEN //execute only once  C.tInfoOffAndNotAckTimeout_C := T#30S;
     //automatically set Defect to Off and NotAck
     pDefect^.Set(FALSE);
   END_IF
   lifeTime := ActTime.GetDateTime - pDefect^.FallingEdge;
-  IF lifeTime >= C.tInfoOffTimeout_C THEN
+  IF lifeTime >= CDefect.tInfoOffTimeout_C THEN
     IF pDefect^.State = E_DefectState.OffAndNotAck THEN //execute only once   C.tInfoOffTimeout_C := T#10S; 
       //automatically set Defect to Off
       pDefect^.Ack();
@@ -565,7 +601,7 @@ VAR_INPUT
   dtEdge : DATE_AND_TIME;
 END_VAR
 VAR_IN_OUT
-  sEdge  : STRING(C.nDefectTableStrLen_C);
+  sEdge  : STRING(CDefect.nDefectTableStrLen_C);
 END_VAR
 VAR
   sMonth  : T_MaxString;
@@ -588,16 +624,32 @@ END_VAR]]></Declaration>
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Property Name="WarningIsPresent" Id="{48e285b1-c19f-4318-bacc-6849b28f4f73}">
-      <Declaration><![CDATA[PROPERTY WarningIsPresent : bool]]></Declaration>
-      <Get Name="Get" Id="{f02eac71-fdec-4b68-b7ca-43eda3ae7209}">
-        <Declaration><![CDATA[VAR
+    <Method Name="SevereDefectSet" Id="{89ad5e55-4230-4edc-81ed-424a309879c0}">
+      <Declaration><![CDATA[METHOD private SevereDefectSet : BOOL
+VAR
+	i			: UINT;	
+	pDef	: POINTER TO CL_Defect;
+	iDef	: ITF_Defect;
 END_VAR
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[WarningIsPresent := _WarningIsPresent;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
+      <Implementation>
+        <ST><![CDATA[// this funtion return true if AT LEAST one defect critical or warning or error is set
+SevereDefectSet := FALSE;
+FOR i:= 1 TO _nMaxDefects DO
+	IF AllDefects_ARP^[i] <> 0 THEN // Check if one defect is registred at this index
+		iDef := AllDefects_ARP^[i]^;
+		// Ctrl if address has the good interface (ITF_Default)
+		IF __QUERYPOINTER(iDef, pDef) THEN 
+			IF pDef^.State = E_DefectState.Active OR pDef^.State = E_DefectState.OffAndNotAck OR pDef^.State = E_DefectState.ActiveAndAck THEN
+				IF pDef^.Severity = TcEventSeverity.Critical OR pDef^.Severity = TcEventSeverity.Error OR pDef^.Severity = TcEventSeverity.Warning THEN
+					SevereDefectSet := TRUE;
+					EXIT;
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
   </POU>
 </TcPlcObject>

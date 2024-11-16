@@ -315,6 +315,18 @@ END_VAR
 bTelInfoSent := FALSE;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="DefectToSend" Id="{91ccb6e6-63ce-4278-8431-d79b8ff79727}">
+      <Declaration><![CDATA[PROPERTY PUBLIC DefectToSend : BOOL]]></Declaration>
+      <Get Name="Get" Id="{44d675e2-7309-44f6-a242-d6534da9bbe7}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[//condition OR pDf^.State = E_DefectState.OffAndNotAck added MPL date 16-11-2024
+DefectToSend := State = E_DefectState.Active OR State = E_DefectState.ActiveAndAck OR State = E_DefectState.OffAndNotAck;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="Description" Id="{b79e4a6d-6da3-4efa-a729-3209c771b301}">
       <Declaration><![CDATA[PROPERTY PUBLIC Description : String]]></Declaration>
       <Get Name="Get" Id="{a592b11a-fd05-4787-8a73-0f741ccc819f}">
@@ -434,14 +446,14 @@ IF __ISVALIDREF(DefectMngr) THEN
   END_CASE
 	
 	FOR i:= 1 TO _DefectMngr.nMaxDefects DO	
-		IF (i = _DefectMngr.nMaxDefects) AND (_DefectMngr.List(i,0) = 0) THEN // List of Defects is already full => Error
+		IF (i = _DefectMngr.nMaxDefects) AND (_DefectMngr.ListAll(i,0) = 0) THEN // List of Defects is already full => Error
       _DefectMngr.ArrayIsFull := TRUE;
       ADSLOGSTR(ADSLOG_MSGTYPE_MSGBOX, 'Fatal error: too many defects: increase the array size and recompile','');
-		ELSIF _DefectMngr.List(i,0) = THIS THEN // Defect already in the list
+		ELSIF _DefectMngr.ListAll(i,0) = THIS THEN // Defect already in the list
       Register := _bRegistered := TRUE;
 			EXIT;
-		ELSIF _DefectMngr.List(i,0) = 0 THEN // Add Defect in the list
-			_DefectMngr.List(i,THIS);
+		ELSIF _DefectMngr.ListAll(i,0) = 0 THEN // Add Defect in the list
+			_DefectMngr.ListAll(i,THIS);
 			Register := _bRegistered := TRUE;
 			EXIT;
 		END_IF
@@ -475,7 +487,7 @@ END_VAR
   UpdateHideDefect();
 ELSIF NOT bSetActivate THEN
 	IF State = E_DefectState.Off OR State = E_DefectState.OffAndNotAck THEN
-    //Alarm and Info messages can be sent again only if the Defect return to E_DefectState.Off
+    //IMPORTANT: Alarm and Info messages can be sent again only if the Defect return to E_DefectState.Off
     IF State = E_DefectState.Off THEN
 		  DefectSentToFalse();
     END_IF
@@ -559,7 +571,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="UpdateHideDefect" Id="{ce503e5f-2ddd-4972-942e-a2fbaeb315e7}">
-      <Declaration><![CDATA[METHOD PRIVATE UpdateHideDefect
+      <Declaration><![CDATA[METHOD UpdateHideDefect
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bHideDefect := NOT (State = E_DefectState.Off) and NOT (State = E_DefectState.OffAndNotAck ) and not (State = E_DefectState.Active );]]></ST>
