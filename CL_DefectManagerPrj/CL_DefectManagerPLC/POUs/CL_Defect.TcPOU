@@ -537,6 +537,18 @@ END_VAR
 Set(TRUE);]]></ST>
       </Implementation>
     </Method>
+    <Method Name="SetWithMCErrorID" Id="{e29589f7-0222-488b-9c25-04b1fa9b8d21}">
+      <Declaration><![CDATA[METHOD PUBLIC SetWithMCErrorID
+VAR_INPUT
+  bSetActivate  : BOOL;
+  MCErrorID     : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_sAddMsg := UDINT_TO_STRING(MCErrorID);
+_sAddMsg := concat(' MC Error ID : ',_sAddMsg);
+Set(bSetActivate);]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="SetWithMsg" Id="{f61029a3-eb19-4eb2-9148-638d384c2f43}">
       <Declaration><![CDATA[METHOD PUBLIC SetWithMsg
 VAR_INPUT
