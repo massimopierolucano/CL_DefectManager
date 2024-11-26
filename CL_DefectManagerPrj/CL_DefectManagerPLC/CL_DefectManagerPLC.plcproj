@@ -17,9 +17,9 @@
     <Implicit_Jitter_Distribution>{51a4d365-e3f9-4c9e-9284-8142424d1a1d}</Implicit_Jitter_Distribution>
     <LibraryReferences>{549e7324-26e3-44b6-b6f1-d3e724f0ec9c}</LibraryReferences>
     <Company>CleanGreens SA</Company>
-    <Released>false</Released>
+    <Released>true</Released>
     <Title>CL_DefectManager</Title>
-    <ProjectVersion>2.3.3</ProjectVersion>
+    <ProjectVersion>2.4</ProjectVersion>
     <LibraryCategories>
       <LibraryCategory xmlns="">
         <Id>{43ba0754-6919-43b3-a5b3-d04b4efb2ad6}</Id>
@@ -44,6 +44,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DUTs\E_DefectState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ST_DefectManagerConstants.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\ST_DefectTable.TcDUT">

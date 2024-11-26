@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="ST_DefectManagerConstants" Id="{096ad89c-eb27-4b68-aad9-cdb441666f5c}">
+    <Declaration><![CDATA[TYPE ST_DefectManagerConstants :
+STRUCT
+  nMaxDefects	        : UINT;//maximun number of defects that can be registred in the defect manager
+	nMaxDefectsView	    :	UINT;//number of line to show in the HMI, each line is a defect
+  nNumIrrLinesForHMI  : UINT;//number of irrigation line handled by a single PLC and HMI
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

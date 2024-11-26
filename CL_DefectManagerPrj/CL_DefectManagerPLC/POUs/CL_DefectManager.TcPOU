@@ -4,7 +4,6 @@
     <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
 FUNCTION_BLOCK PUBLIC CL_DefectManager EXTENDS CL_MasterRootClass
 VAR
-  //_nThisLine              : UINT := 0;
 	bInit			              : BOOL := FALSE;
 	pDefect                 : POINTER TO CL_Defect;
 	iDefect                 : ITF_Defect;
@@ -23,38 +22,40 @@ VAR
   _nNumIrrLinesForHMI     : UINT;
   
   i1,x1,y1                : UINT;
-  
-  // Color for HMI
-	SeverityColor_Debug     : DWORD := 4294918837;
-	SeverityColor_Info      : DWORD := 4278190335;
-	SeverityColor_Warning   : DWORD := 4294945792;
-	SeverityColor_Error     : DWORD := 4294901760;
-	SeverityColor_Critical  : DWORD := 4288217088;
-  
-  // Filter minimum level shown
-	eMinSeverityShow        : TcEventSeverity  := TcEventSeverity.Info; 
-	
+  	
   AllDefects_ARP          : POINTER TO ARRAY[1..CDefect.nMaxDefects_C] OF POINTER TO CL_Defect; //used by CL_defect
-  CurrentAllDefects_ARP   : POINTER TO ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; // AllDefects_ARP^ of Defects activated
-    
-  CurrentDefects_AR       : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Defects shown
-  CurrentDefectsInfo_AR   : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Info Verbose Defects shown
-  
-  Ack_Defects             : BOOL := FALSE;
-  Ack_InfoVerboseDefects  : BOOL := FALSE;
+  CurrentAllDefects_ARP   : POINTER TO ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; // AllDefects_ARP^ of Defects activated 
   
   // Check by severity level
 	DefaultAlarmIsPresent   : BOOL := FALSE;
 	DefaultWarningIsPresent : BOOL := FALSE;
 
 	bArrayIsFull            : BOOL := FALSE;
-	
-	//used only in VISU
-	ExpertView              : BOOL := FALSE;
-  
-  //Database object
+
+  //objects
 	_objErrorDB_R	          :	REFERENCE TO CL_ErrorDB;
   _objActTime_R           :	REFERENCE TO CL_ActTimeDate;
+
+  //-------------------------------------  HMI interface ---------------------------------------
+  CurrentDefects_AR       : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Defects shown
+  CurrentDefectsInfo_AR   : ARRAY[1..CDefect.nMaxDefectsView_C] OF ST_DefectTable; //For HMI, AllDefects_ARP^ of Info Verbose Defects shown
+  
+  //HMI buttons interface
+  Ack_Defects             : BOOL := FALSE;
+  Ack_InfoVerboseDefects  : BOOL := FALSE;
+
+  //button filter minimum level shown
+	eMinSeverityShow        : TcEventSeverity  := TcEventSeverity.Info; 
+  
+	//button expert view; used only in HMI
+	ExpertView              : BOOL := FALSE;
+
+  // Color for HMI
+	SeverityColor_Debug     : DWORD := 4294918837;
+	SeverityColor_Info      : DWORD := 4278190335;
+	SeverityColor_Warning   : DWORD := 4294945792;
+	SeverityColor_Error     : DWORD := 4294901760;
+	SeverityColor_Critical  : DWORD := 4288217088;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -232,18 +233,19 @@ VAR_INPUT
   stIrrLine           : ST_LineReference;
   ErrorDB_R           : REFERENCE TO CL_ErrorDB;
   ActTime_R           : REFERENCE TO CL_ActTimeDate;
-	nMaxDefects	        : UINT;
-	nMaxDefectsView	    :	UINT;//number of line to show in the HMI, each line is a defect
-  nNumIrrLinesForHMI  : UINT;//number of irrigation line handled by a single PLC and HMI
+  stDefectManager_C   : ST_DefectManagerConstants;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bInit := Init := FALSE;
-IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND nMaxDefects > 0 AND nMaxDefects <= CDefect.nMaxDefects_C AND nMaxDefectsView > 0 AND nMaxDefectsView <= CDefect.nMaxDefectsView_C and nNumIrrLinesForHMI > 0 THEN
+IF NOT bInit AND __ISVALIDREF(ErrorDB_R) AND __ISVALIDREF(ActTime_R) AND 
+ stDefectManager_C.nMaxDefects > 0 AND stDefectManager_C.nMaxDefects <= CDefect.nMaxDefects_C 
+ AND stDefectManager_C.nMaxDefectsView > 0 AND stDefectManager_C.nMaxDefectsView <= CDefect.nMaxDefectsView_C AND stDefectManager_C.nNumIrrLinesForHMI > 0 THEN
+  
   MRCLineRef := stIrrLine;
-  _nMaxDefects	:=	nMaxDefects;
-  _nMaxDefectsView	:=	nMaxDefectsView;
-  _nNumIrrLinesForHMI := nNumIrrLinesForHMI;
+  _nMaxDefects	:=	stDefectManager_C.nMaxDefects;
+  _nMaxDefectsView	:=	stDefectManager_C.nMaxDefectsView;
+  _nNumIrrLinesForHMI := stDefectManager_C.nNumIrrLinesForHMI;
 
   _objErrorDB_R REF= ErrorDB_R;
   _objActTime_R REF= ActTime_R;
